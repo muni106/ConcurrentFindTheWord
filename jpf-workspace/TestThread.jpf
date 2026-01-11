@@ -1,0 +1,7 @@
+target = pcd.ass_single.part1.TestThread
+
+classpath=bin
+
+listener=gov.nasa.jpf.listener.PreciseRaceDetector
+
+report.console.property_violation=error,trace

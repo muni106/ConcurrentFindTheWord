@@ -25,7 +25,6 @@ public class ActorBasedSearcher implements PdfWordSearcher {
         }
     }
 
-    // TODO fix logic
     @Override
     public void extractText(List<File> pdfs, String word, SearchModel model) throws Exception {
         ActorSystem actorSystem = ActorSystem.create("PdfCounter");

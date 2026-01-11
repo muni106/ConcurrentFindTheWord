@@ -1,0 +1,11 @@
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/ModelObserver.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/SearchController.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/SearchModel.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/TestThread.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/events/ExtractionEvent.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/events/ExtractionEventType.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/strategies/PdfWordSearcher.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/strategies/thread/Monitor.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/strategies/thread/Output.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/strategies/thread/ThreadPoolSearch.java
+/Users/muni/Documents/uni/PCD/PCD-all-in-one/jpf-workspace/src/main/java/pcd/ass_single/part1/strategies/thread/Worker.java
