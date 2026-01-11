@@ -1,11 +1,7 @@
 package pcd.ass_single.part1;
 
+import pcd.ass_single.part1.strategies.BasicSearch;
 import pcd.ass_single.part1.strategies.PdfWordSearcher;
-import pcd.ass_single.part1.strategies.actors.ActorBasedSearcher;
-import pcd.ass_single.part1.strategies.async_event.VertxAsyncSearcher;
-import pcd.ass_single.part1.strategies.reactive_prog.RxJavaSearcher;
-import pcd.ass_single.part1.strategies.task_based.ForkJoinSearcher;
-import pcd.ass_single.part1.strategies.thread.ThreadPoolSearch;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -36,7 +32,7 @@ public class SearchModel {
     }
 
     private void scrapePdfsWithWord(String searchedWord) {
-        PdfWordSearcher textScraper = new ActorBasedSearcher();
+        PdfWordSearcher textScraper = new BasicSearch();
         try {
             textScraper.extractText(pdfs, searchedWord, this);
         } catch ( Exception e ) {

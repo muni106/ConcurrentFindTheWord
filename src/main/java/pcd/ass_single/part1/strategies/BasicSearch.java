@@ -1,16 +1,15 @@
-package pcd.ass_single.part1.example;
+package pcd.ass_single.part1.strategies;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.text.PDFTextStripper;
-import pcd.ass_single.part1.strategies.PdfWordSearcher;
 import pcd.ass_single.part1.SearchModel;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public class BaseProgram implements PdfWordSearcher {
+public class BasicSearch implements PdfWordSearcher {
 
     @Override
     public void extractText(List<File> files, String word, SearchModel model) throws IOException {
@@ -23,15 +22,14 @@ public class BaseProgram implements PdfWordSearcher {
         if (files != null) {
             for (File file : files) {
                 if (file.isFile() && file.getName().endsWith(".pdf")) {
-                    System.out.println("File: " + file.getName());
                     if (containsWord(file, word)) {
+                        model.incCountPdfFilesWithWord();
                         count += 1;
                     }
                 }
             }
         }
 
-        System.out.println(count + " pdf files contains the word: " + word);
         long endTime = System.currentTimeMillis();
 
         System.out.println("Total time: " + (endTime - startTime) + " ms");
@@ -60,7 +58,7 @@ public class BaseProgram implements PdfWordSearcher {
 
 
     private static void usage() {
-        System.err.println("Usage: java " + BaseProgram.class.getName() + " <directory> <word>");
+        System.err.println("Usage: java " + BasicSearch.class.getName() + " <directory> <word>");
         System.exit(-1);
     }
 }
