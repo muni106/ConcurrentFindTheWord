@@ -5,6 +5,7 @@ import akka.actor.ActorRef;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.text.PDFTextStripper;
+import pcd.ass_single.part1.SearchModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,10 +14,12 @@ class PdfAnalyzerActor extends AbstractActor {
     static class GetCount {}
 
     static class PdfWordMessage {
+        public final SearchModel model;
         public final File pdf;
         public final String word;
 
-        public PdfWordMessage(File pdf, String word) {
+        public PdfWordMessage(SearchModel model, File pdf, String word) {
+            this.model = model;
             this.pdf = pdf;
             this.word = word;
         }
@@ -27,8 +30,7 @@ class PdfAnalyzerActor extends AbstractActor {
     public Receive createReceive() {
         return receiveBuilder()
                 .match(PdfWordMessage.class, pdfWordMessage -> {
-                    this.count += containsWord(pdfWordMessage.pdf, pdfWordMessage.word);
-                    Thread.sleep(1000);
+                    this.count += containsWord(pdfWordMessage.pdf, pdfWordMessage.word, pdfWordMessage.model);
                 })
                 .match(GetCount.class, msg -> {
                     getSender().tell(count, ActorRef.noSender());
@@ -36,7 +38,7 @@ class PdfAnalyzerActor extends AbstractActor {
                 .build();
     }
 
-    private Integer containsWord(File pdf, String word) throws IOException {
+    private Integer containsWord(File pdf, String word, SearchModel model) throws IOException {
         try (PDDocument document = PDDocument.load(pdf)) {
             AccessPermission ap = document.getCurrentAccessPermission();
             if (!ap.canExtractContent()) {
@@ -45,7 +47,11 @@ class PdfAnalyzerActor extends AbstractActor {
             PDFTextStripper stripper = new PDFTextStripper();
             String text = stripper.getText(document);
             document.close();
-            return text.contains(word) ? 1 : 0;
+            if ( text.contains(word) ) {
+                model.incCountPdfFilesWithWord();
+                return 1;
+            }
+            return 0;
         }
     }
 

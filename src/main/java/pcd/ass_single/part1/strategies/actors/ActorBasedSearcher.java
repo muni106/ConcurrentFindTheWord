@@ -25,19 +25,18 @@ public class ActorBasedSearcher implements PdfWordSearcher {
         }
     }
 
-    // TODO fix model logic
+    // TODO fix logic
     @Override
     public void extractText(List<File> pdfs, String word, SearchModel model) throws Exception {
         ActorSystem actorSystem = ActorSystem.create("PdfCounter");
         ActorRef counter = actorSystem.actorOf(Props.create(PdfAnalyzerActor.class));
 
         for (File pdf : pdfs) {
-            counter.tell(new PdfAnalyzerActor.PdfWordMessage(pdf, word), ActorRef.noSender());
+            counter.tell(new PdfAnalyzerActor.PdfWordMessage(model, pdf, word), ActorRef.noSender());
         }
 
         ActorRef requester = actorSystem.actorOf(Props.create(RequesterActor.class));
         counter.tell(new PdfAnalyzerActor.GetCount(), requester);
-
     }
 
 

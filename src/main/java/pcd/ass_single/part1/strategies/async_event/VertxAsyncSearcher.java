@@ -31,9 +31,7 @@ class PdfSearchVerticle extends AbstractVerticle {
         for (File pdf : pdfs) {
             Future<Integer> future = vertx.executeBlocking(() -> {
                 try {
-                    int computationResult = containsWord(pdf, searchedWord);
-                    model.incCountPdfFilesWithWord();
-                    return computationResult;
+                    return containsWord(pdf, searchedWord, model);
                 } catch (IOException e) {
                     throw new RuntimeException("Problem in extracting word in the file : " + pdf.getName() + "..." + e);
                 }
@@ -44,6 +42,7 @@ class PdfSearchVerticle extends AbstractVerticle {
             int sum = 0;
             for (int i = 0; i < compositeFuture.size(); i++) {
                 sum += compositeFuture.<Integer>resultAt(i);
+                model.setCountPdfFilesWithWord(sum);
         }
             return sum;
         }).onSuccess(result -> {
@@ -53,7 +52,7 @@ class PdfSearchVerticle extends AbstractVerticle {
         });
     }
 
-    private Integer containsWord(File pdf, String word) throws IOException {
+    private Integer containsWord(File pdf, String word, SearchModel model) throws IOException {
         PDDocument document = PDDocument.load(pdf);
 
         AccessPermission ap = document.getCurrentAccessPermission();
@@ -66,6 +65,7 @@ class PdfSearchVerticle extends AbstractVerticle {
 
         if (text.contains(word)) {
             document.close();
+            model.incCountPdfFilesWithWord();
             return 1;
         }
 
