@@ -29,7 +29,7 @@ public class DirectoryTree {
         for (File entry : dir.listFiles()) {
             if (entry.isDirectory()) {
                 subDirectories.add(DirectoryTree.fromDirectory(entry));
-            } else if (entry.getName().endsWith("pdf")){
+            } else if (entry.getName().toLowerCase().endsWith("pdf")){
                 pdfs.add(entry);
             }
         }

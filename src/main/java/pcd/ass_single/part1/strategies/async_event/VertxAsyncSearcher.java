@@ -16,10 +16,12 @@ import java.util.List;
 class PdfSearchVerticle extends AbstractVerticle {
     private final List<File> pdfs;
     private final String searchedWord;
+    private final SearchModel model;
 
-    PdfSearchVerticle(List<File> pdfs, String searchedWord) {
+    PdfSearchVerticle(List<File> pdfs, String searchedWord, SearchModel model) {
         this.pdfs = pdfs;
         this.searchedWord = searchedWord;
+        this.model = model;
     }
 
     public void start() {
@@ -29,7 +31,9 @@ class PdfSearchVerticle extends AbstractVerticle {
         for (File pdf : pdfs) {
             Future<Integer> future = vertx.executeBlocking(() -> {
                 try {
-                    return containsWord(pdf, searchedWord);
+                    int computationResult = containsWord(pdf, searchedWord);
+                    model.incCountPdfFilesWithWord();
+                    return computationResult;
                 } catch (IOException e) {
                     throw new RuntimeException("Problem in extracting word in the file : " + pdf.getName() + "..." + e);
                 }
@@ -72,13 +76,12 @@ class PdfSearchVerticle extends AbstractVerticle {
 
 
 public class VertxAsyncSearcher implements PdfWordSearcher {
-    // TODO fix model logic
     @Override
     public void extractText(List<File> pdfs, String word, SearchModel model) throws Exception {
 
         int workerPoolSize = Runtime.getRuntime().availableProcessors();
         VertxOptions options = new VertxOptions().setWorkerPoolSize(workerPoolSize);
         Vertx vertx = Vertx.vertx(options);
-        vertx.deployVerticle(new PdfSearchVerticle(pdfs, word));
+        vertx.deployVerticle(new PdfSearchVerticle(pdfs, word, model));
     }
 }

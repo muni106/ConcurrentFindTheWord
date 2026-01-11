@@ -3,6 +3,7 @@ package pcd.ass_single.part1.strategies.task_based;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.text.PDFTextStripper;
+import pcd.ass_single.part1.SearchModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,6 +11,11 @@ import java.util.concurrent.ForkJoinPool;
 
 public class FileCounter {
     private final ForkJoinPool forkJoinPool = new ForkJoinPool();
+    private SearchModel model;
+
+    public FileCounter(SearchModel model) {
+        this.model = model;
+    }
 
     public int containsWord(File pdf, String word) throws IOException {
         PDDocument document = PDDocument.load(pdf);
@@ -32,10 +38,10 @@ public class FileCounter {
 
     public Integer countFilesInParallel(DirectoryTree dir, String searchedWord) throws IOException {
         try {
-            return forkJoinPool.invoke(new DirectoryScanTask(this, dir, searchedWord));
+
+            return forkJoinPool.invoke(new DirectoryScanTask(this, dir, searchedWord, model));
         } finally {
-            forkJoinPool.shutdown();        // orderly shutdown
-            // forkJoinPool.shutdownNow();  // or immediate shutdown
+            forkJoinPool.shutdown();
         }
     }
 }

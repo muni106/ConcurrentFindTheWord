@@ -14,12 +14,17 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import pcd.ass_single.part1.SearchModel;
 
 public class RxJavaSearcher implements PdfWordSearcher {
-    private ConnectableFlowable<Integer> getHotPdfStream(List<File> pdfs, String word) throws IOException {
+    private ConnectableFlowable<Integer> getHotPdfStream(List<File> pdfs, String word, SearchModel model) throws IOException {
         Flowable<Integer> source = Flowable.create(emitter -> {
             try {
                 for  (int i = 0; i < pdfs.size(); i++) {
                     // log("ciao " + i + " " + pdfs.get(i));
-                    emitter.onNext(containsWord(pdfs.get(i), word));
+                    int searchResult = containsWord(pdfs.get(i), word);
+
+                    if (searchResult == 1) {
+                        model.incCountPdfFilesWithWord();
+                    }
+                    emitter.onNext(searchResult);
                 }
                 emitter.onComplete();
             } catch (Exception ex) {
@@ -34,12 +39,11 @@ public class RxJavaSearcher implements PdfWordSearcher {
         return hotObservable;
     }
 
-    // TODO fix model logic
     @Override
     public void extractText(List<File> pdfs, String word, SearchModel model) throws Exception {
         long startTime = System.currentTimeMillis();
         try {
-            ConnectableFlowable<Integer> source = getHotPdfStream(pdfs, word);
+            ConnectableFlowable<Integer> source = getHotPdfStream(pdfs, word, model);
             source
                     .onBackpressureBuffer(5_000, () -> log("Buffer is too large"))
                     .reduce(0, Integer::sum)

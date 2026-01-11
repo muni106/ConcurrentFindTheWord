@@ -9,7 +9,6 @@ import java.util.List;
 
 public class ForkJoinSearcher implements PdfWordSearcher {
 
-    //TODO fix model logix
     @Override
     public void extractText(List<File> files, String word, SearchModel model) throws IOException {
         long startTime = System.currentTimeMillis();
@@ -19,8 +18,9 @@ public class ForkJoinSearcher implements PdfWordSearcher {
         Integer count = 0;
 
         if (files != null && !files.isEmpty()) {
+            // next line is a little bit ugly
             DirectoryTree dir = DirectoryTree.fromDirectory(files.getFirst().getParentFile());
-            FileCounter fc = new FileCounter();
+            FileCounter fc = new FileCounter(model);
             count = fc.countFilesInParallel(dir, word);
             System.out.println("The number of files with the word " + word + " is: " + count);
         }else {
