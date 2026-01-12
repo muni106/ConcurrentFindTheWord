@@ -142,11 +142,152 @@ This organizational structure ensures that each concurrency strategy can be deve
 tested, and analyzed independently while sharing common infrastructure components,
 facilitating comparative performance analysis across all six approaches.
 
+## Thread-based approach
+The thread-based implementation leverages traditional multithreading
+principles with custom monitor synchronization to achieve optimal CPU
+utilization while maintaining strict control over concurrency mechanisms.
+
+.mermaid 
+    flowchart TD
+        Start([PDF Files List])
+        Split{Partition N=CPU+1}
+        W1[Worker 1 Chunk 1]
+        W2[Worker 2 Chunk 2]
+        W3[Worker N Chunk N]
+        P1[Process PDFs Extract Match]
+        P2[Process PDFs Extract Match]
+        P3[Process PDFs Extract Match]
+        U1[Update Model: increment pdfsWithWord]
+        U2[Update Model: increment pdfsWithWord]
+        U3[Update Model: increment pdfsWithWord]
+        M((Monitor))
+        Wait[Output Thread await]
+        Signal[signal complete]
+        Result([Final Count + Time])
+        
+        Start --> Split
+        Split --> W1
+        Split --> W2
+        Split --> W3
+        W1 --> P1
+        W2 --> P2
+        W3 --> P3
+        P1 --> U1
+        P2 --> U2
+        P3 --> U3
+        U1 --> M
+        U2 --> M
+        U3 --> M
+        M --> Wait
+        Wait --> Signal
+        Signal --> Result
+
+### Thread pool size strategy
+The solution dynamically determines the optimal number of worker threads based
+on available CPU resources using the formula Nthreads = Ncpu + 1,
+where Ncpu is obtained via `Runtime.getRuntime().availableProcessors()`.
+This approach follows the established heuristic that a system with N processors
+achieves optimal utilization with N+1 threads, accounting for potential I/O blocking during
+PDF file operations.
+When the number of PDF files is smaller than available CPUs,
+the thread count adapts accordingly to avoid unnecessary thread creation overhead.
+
+### Work partitioning and distribution
+The ThreadPoolSearch class divides the list of PDF files into equal-sized chunks using a step-based partitioning strategy: step = numFiles / Nthreads.
+Each Worker thread receives a contiguous range defined by start and end indices, processing files
+independently without inter-worker communication. The final worker handles any remaining files due to integer division, ensuring all PDFs are processed.
+
+### Monitor-Based Coordination
+
+The custom monitor class implements a synchronization mechanism using ReentrantLock
+and Condition variables from java.util.concurrent.locks, adhering to the assignment
+constraint of using only low-level concurrent utilities for monitor implementation.
+The monitor maintains two critical pieces of state:
+- count: Accumulates the total number of PDFs containing the target word across all workers.
+- numFiles: Tracks remaining unprocessed files, decremented as workers complete their chunks.
+
+Workers call `updateFoundFiles(analyzedFiles, filesFound)` upon completing their assigned chunk, which atomically updates both counters under mutex protection. When the last worker finishes (numFiles == 0),
+the monitor signals the waiting Output thread via the workersFinished condition variable.
+
+### Worker thread implementation
+Each worker thread `extends Thread` and processes its assigned file range by iterating through
+PDF files, extracting text using Apache PDFBox's PDFTextStripper, and performing string matching.
+The worker immediately updates the shared SearchModel when a match is found via `model.incCountPdfFilesWithWord()`,
+enabling real-time updates.
+After processing all assigned files, the worker reports its results to the monitor,
+decoupling individual progress updates from final aggregation.
+
+### Output thread and results collection
+
+The Output thread implements a separate waiting mechanism that blocks on the monitor's get()
+method until all workers signal completion. This design separates result collection from
+computation, allowing the main thread to remain responsive while workers execute in parallel.
+The output thread also measures total execution time from job start to completion,
+providing performance metrics.
+
+.mermaid 
+    classDiagram
+        class PdfWordSearcher {
+            <<interface>>
+            +extractText(List~File~ pdfs, String word, SearchModel model)
+        }
+        
+        class ThreadPoolSearch {
+            +extractText(List~File~ files, String word, SearchModel model)
+        }
+        
+        class Monitor {
+            -int count
+            -Lock mutex
+            -Condition workersFinished
+            -int numFiles
+            -SearchModel model
+            +Monitor(int numFiles, SearchModel model)
+            +updateFoundFiles(int analyzedFiles, int filesFound)
+            +get() int
+        }
+        
+        class Worker {
+            -Monitor cell
+            -List~File~ files
+            -int start
+            -int end
+            -String searchedWord
+            -SearchModel model
+            +Worker(Monitor cell, int start, int end, List~File~ files, String word, SearchModel model)
+            +run()
+            -containsWord(File pdf, String word) boolean
+        }
+        
+        class Output {
+            -Monitor cell
+            -long startTime
+            +Output(Monitor cell, long startTime)
+            +run()
+        }
+        
+        class SearchModel {
+            +incCountPdfFilesWithWord()
+        }
+        
+        PdfWordSearcher <|.. ThreadPoolSearch
+        ThreadPoolSearch ..> Monitor : creates
+        ThreadPoolSearch ..> Worker : creates
+        ThreadPoolSearch ..> Output : creates
+        Worker --> Monitor : updates
+        Worker --> SearchModel : updates
+        Output --> Monitor : waits on
+        Monitor --> SearchModel : uses
 
 
 
 
-# Performance 
+
+
+
+
+
+<!-- # Performance 
 
 # Correctness
 
@@ -155,6 +296,6 @@ about the Thread based strategy, considering these are my notes:
 `int Nthreads = Ncpu + 1;`
 
 Then I implemented monitor with workers => one worker named Output waiting for the others to return the result
-
+ -->
 
 
