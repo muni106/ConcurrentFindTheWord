@@ -27,7 +27,7 @@ public class VirtualThreadSearcher implements PdfWordSearcher {
 
             Thread outputThread = Thread.ofVirtual().name("outputThread").unstarted(() -> {
                 int value = m.get();
-                System.out.println("OOOOOOOOOOO: " + value);
+                System.out.println("final count: " + value);
             });
 
 
@@ -36,7 +36,7 @@ public class VirtualThreadSearcher implements PdfWordSearcher {
                     executor.submit(() -> {
                         Thread
                             .ofVirtual()
-                            .name("virtualThread[" + i + "]")
+                            .name("workerThread[" + i + "]")
                             .start(() -> {
                                 System.out.println("Hello from " + Thread.currentThread());
                                 try {

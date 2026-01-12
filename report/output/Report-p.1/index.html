@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="author" content="Mounir Samite">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report</title>
+    <title>Report p.1</title>
     <script src="./script/quarkdown.js"></script>
     <script>const capabilities = window.quarkdownCapabilities</script>
     <script>window.PagedConfig = {auto: false};</script>
@@ -51,7 +51,7 @@
     </script>
 </head>
 <body class="quarkdown quarkdown-paged">
-<div class="page-margin-content page-margin-bottom-center" data-on-left-page="bottom-center" data-on-right-page="bottom-center"><p><span class="current-page-number">-</span> / <span class="total-page-number">-</span></p></div><div class="container fullwidth" style="justify-items: center; text-align: center;"><h1 id="report" data-decorative="">Report</h1><p>Mounir Samite 2026</p></div><hr /><div class="page-break" data-hidden=""></div><h1 id="table-of-contents">Table of Contents</h1><nav data-role="table-of-contents"><ol><li data-location="1"><a href="#problem-analisys">Problem analisys</a><ol><li data-location="1.1"><a href="#decomposition-strategy">Decomposition strategy</a></li><li data-location="1.2"><a href="#coordination-and-synchronization-challenges">Coordination and synchronization challenges</a></li></ol></li><li data-location="2"><a href="#solution-strategy-and-architecture">Solution strategy and architecture</a><ol><li data-location="2.1"><a href="#high-level-architecture">High-level architecture</a></li><li data-location="2.2"><a href="#thread-based-approach">Thread based approach</a></li><li data-location="2.3"><a href="#virtual-threads">Virtual Threads</a></li></ol></li></ol></nav><p></p><div class="page-break" data-hidden=""></div><h1 id="problem-analisys" data-location="1">Problem analisys</h1><p>The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a GUI.</p><h2 id="decomposition-strategy" data-location="1.1">Decomposition strategy</h2><p>The problem can be decomposed along two primary dimensions: task decomposition and data decomposition.
+<div class="page-margin-content page-margin-bottom-center" data-on-left-page="bottom-center" data-on-right-page="bottom-center"><p><span class="current-page-number">-</span> / <span class="total-page-number">-</span></p></div><div class="container fullwidth" style="justify-items: center; text-align: center;"><h1 id="report-p1" data-decorative="">Report p.1</h1><p>Mounir Samite 2026</p></div><hr /><div class="page-break" data-hidden=""></div><h1 id="table-of-contents">Table of Contents</h1><nav data-role="table-of-contents"><ol><li data-location="1"><a href="#problem-analisys">Problem analisys</a><ol><li data-location="1.1"><a href="#decomposition-strategy">Decomposition strategy</a></li><li data-location="1.2"><a href="#coordination-and-synchronization-challenges">Coordination and synchronization challenges</a></li></ol></li><li data-location="2"><a href="#solution-strategy-and-architecture">Solution strategy and architecture</a><ol><li data-location="2.1"><a href="#high-level-architecture">High-level architecture</a></li><li data-location="2.2"><a href="#thread-based-approach">Thread based approach</a></li><li data-location="2.3"><a href="#virtual-threads">Virtual Threads</a></li><li data-location="2.4"><a href="#task-based-approach">Task based approach</a></li><li data-location="2.5"><a href="#async-event-approach">Async event approach</a></li></ol></li></ol></nav><p></p><div class="page-break" data-hidden=""></div><h1 id="problem-analisys" data-location="1">Problem analisys</h1><p>The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a GUI.</p><h2 id="decomposition-strategy" data-location="1.1">Decomposition strategy</h2><p>The problem can be decomposed along two primary dimensions: task decomposition and data decomposition.
 Task decomposition involves breaking down the workflow into distinct
 operations:</p><ul><li>directory traversal</li><li>file identification</li><li>pdf text extraction</li><li>word matching</li><li>result aggregation</li></ul><p>While data decomposition focuses on partitioning the set of pdf files
 into chunks that can be processed concurrently.
@@ -227,7 +227,7 @@ providing performance metrics.</p><figure><pre class="mermaid fill-height">class
     Worker --&gt; Monitor : updates
     Worker --&gt; SearchModel : updates
     Output --&gt; Monitor : waits on
-    Monitor --&gt; SearchModel : uses</pre></figure><h2 id="virtual-threads" data-location="2.3">Virtual Threads</h2><p>The virtual thread implementation adopts a virtual thread per file strategy where each
+    Monitor --&gt; SearchModel : uses</pre></figure><div class="page-break" data-hidden=""></div><p></p><h2 id="virtual-threads" data-location="2.3">Virtual Threads</h2><p>The virtual thread implementation adopts a virtual thread per file strategy where each
 PDF is processed by its own virtual thread.</p><h3 id="implementation-structure" data-location="2.3.1">Implementation Structure</h3><p>The solution creates a <strong>monitor</strong> to coordinate all virtual threads, initialized with the total number of files to process. A <strong>virtual thread executor</strong> manages the lifecycle of all worker threads automatically through Java&rsquo;s resource management. Additionally, a separate <strong>output thread</strong> is created but held in reserve until all worker threads begin their execution.</p><p>The processing logic iterates through the entire list of PDF files and submits each one as an independent task to the executor. For each file, a new virtual thread is spawned with a unique identifier for debugging purposes. Each virtual thread independently loads its assigned PDF, extracts the text content, searches for the target word, and reports whether a match was found to the shared monitor.
 Once all tasks are submitted, the output thread begins execution and the main program waits for it to complete before returning</p><h3 id="monitor-synchronization" data-location="2.3.2">Monitor synchronization</h3><p>The monitor uses explicit lock and condition variable mechanisms rather than traditional synchronized blocks, which is essential to prevent virtual threads from being pinned to their carrier threads during blocking operations. When each thread completes processing its file, it calls a method that updates the match counter if the word was found, decrements the remaining work counter, and signals when all files have been processed. The output thread blocks on the monitor until it receives the completion signal, then retrieves and returns the final count.</p><p>During the computation, every time a new file contains the word, the model is updated.</p><p>This architecture exploits the lightweight nature of virtual threads to achieve massive parallelism, creating as many virtual threads as there are PDF files, without overwhelming system resources.</p><figure><pre class="mermaid fill-height">classDiagram
 class PdfWordSearcher {
@@ -279,6 +279,49 @@ VirtualThreadExecutor ..&gt; WorkerThread : spawns N threads
 WorkerThread --&gt; Monitor : reports to
 WorkerThread --&gt; SearchModel : updates
 OutputThread --&gt; Monitor : waits on
-Monitor --&gt; SearchModel : updates</pre></figure><h3 id="_" data-location="2.3.3"></h3>
+Monitor --&gt; SearchModel : updates</pre></figure><div class="page-break" data-hidden=""></div><h2 id="task-based-approach" data-location="2.4">Task based approach</h2><p>The task-based implementation uses Java&rsquo;s ForkJoin framework to decompose the problem hierarchically, mirroring the recursive structure of the directory tree itself.</p><h3 id="hierachical-task-decomposition" data-location="2.4.1">Hierachical task decomposition</h3><p>The solution begins by constructing a complete representation of the directory structure before processing begins. The tree representation recursively captures subdirectories and PDF files at each level, creating a hierarchical data structure that mirrors the file system. This upfront construction enables the ForkJoin framework to understand the complete workload structure and optimize task distribution.</p><p>The tree builder traverses each directory, classifying entries as either subdirectories (which are recursively processed) or PDF files (which are collected as leaf nodes). This separation allows the framework to spawn different task types: directory scanning tasks for structural traversal and word search tasks for actual file processing.</p><h3 id="forkjoin-execution-model" data-location="2.4.2">ForkJoin execution model</h3><p>The coordinator creates a ForkJoin pool and submits the root in the directory task, which initiates the recursive decomposition. Each directory scanning task examines its assigned directory node and performs a two phase forking strategy.</p><p>In the first phase, the task creates and forks child directory tasks for each subdirectory, enabling parallel exploration of the directory tree. In the second phase, it creates and forks word search tasks for each PDF file in the current directory. All forked tasks are collected in a list for subsequent joining.</p><p>After forking all subtasks, the directory task enters a joining phase where it waits for each child task to complete and accumulates their results. This fork-join pattern creates a recursive decomposition where work is divided (forked) down the tree and results are aggregated (joined) back up.</p><h3 id="leaf-word-search-task-process" data-location="2.4.3">Leaf (word search) task process</h3><p>Word search tasks represent the atomic units of computation in this approach. Each task receives a single PDF file reference, extracts its text content, searches for the target word, and returns either 1 for a match or 0 for no match. When a match is found, the task immediately updates the shared model to provide constant UI feedback</p><figure><pre class="mermaid fill-height">flowchart TD
+Start[ForkJoinSearcher] --&gt; Build[Build DirectoryTree&lt;br/&gt;from root directory]
+Build --&gt; Pool[Create ForkJoinPool]
+Pool --&gt; RootTask[DirectoryScanTask&lt;br/&gt;Root Directory]
+
+RootTask --&gt; Fork1{Fork Phase}
+
+Fork1 --&gt; SubDir1[DirectoryScanTask&lt;br/&gt;Subdirectory 1]
+Fork1 --&gt; SubDir2[DirectoryScanTask&lt;br/&gt;Subdirectory 2]
+Fork1 --&gt; PDF1[WordSearchTask&lt;br/&gt;PDF 1]
+Fork1 --&gt; PDF2[WordSearchTask&lt;br/&gt;PDF 2]
+Fork1 --&gt; PDF3[WordSearchTask&lt;br/&gt;PDF 3]
+
+SubDir1 --&gt; Fork2{Fork Phase}
+Fork2 --&gt; PDF4[WordSearchTask&lt;br/&gt;PDF 4]
+Fork2 --&gt; PDF5[WordSearchTask&lt;br/&gt;PDF 5]
+
+SubDir2 --&gt; Fork3{Fork Phase}
+Fork3 --&gt; PDF6[WordSearchTask&lt;br/&gt;PDF 6]
+Fork3 --&gt; PDF7[WordSearchTask&lt;br/&gt;PDF 7]
+
+PDF1 --&gt; R1[Return 0/1]
+PDF2 --&gt; R2[Return 0/1]
+PDF3 --&gt; R3[Return 0/1]
+PDF4 --&gt; R4[Return 0/1]
+PDF5 --&gt; R5[Return 0/1]
+PDF6 --&gt; R6[Return 0/1]
+PDF7 --&gt; R7[Return 0/1]
+
+R4 --&gt; Join2[Join Results]
+R5 --&gt; Join2
+Join2 --&gt; SubDir1Result[Sum]
+
+R6 --&gt; Join3[Join Results]
+R7 --&gt; Join3
+Join3 --&gt; SubDir2Result[Sum]
+
+R1 --&gt; Join1[Join All Results]
+R2 --&gt; Join1
+R3 --&gt; Join1
+SubDir1Result --&gt; Join1
+SubDir2Result --&gt; Join1
+
+Join1 --&gt; Final[Total Count]</pre></figure><h2 id="async-event-approach" data-location="2.5">Async event approach</h2><p>The async event implementation uses the Vert.x framework, which provides an event loop architecture for non-blocking asynchronous processing.</p><h3 id="verticle" data-location="2.5.1">Verticle</h3>
 </body>
 </html>
