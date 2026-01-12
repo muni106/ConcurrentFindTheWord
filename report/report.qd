@@ -71,7 +71,7 @@ maintaining code reusability and separation of concerns.
             S[PdfWordSearcher Interface]
             T1[Thread]
             T2[Virtual Thread]
-            T3[Task-Based]
+            T3[Task Based]
             T4[Async Event]
             T5[Reactive]
             T6[Actor]
@@ -421,11 +421,121 @@ Word search tasks represent the atomic units of computation in this approach. Ea
     
     Join1 --> Final[Total Count]
     
-
+<<<
 ## Async event approach
 The async event implementation uses the Vert.x framework, which provides an event loop architecture for non-blocking asynchronous processing.
 
-### Verticle 
+### Verticle based architecture
+The solution creates a custom verticle, which serves as the deployable unit of concurrent execution in Vert.x. The main searcher class configures a Vert.x instance with a worker pool sized to match available CPU cores, then deploys the PDF search verticle onto this runtime.
+The verticle encapsulates the entire search logic within its methods, receiving the list of PDF files, target word, and model reference through its constructor. When the verticle starts, it initiates the asynchronous processing pipeline.
+
+### Event loop and worker pool
+
+For each PDF file, the verticle submits a blocking task that extracts text and searches for the target word. These tasks execute on worker threads from the pool, preventing the event loop from blocking. Each blocking operation immediately returns a Future object representing the eventual completion of that task.
+
+### Future Composition and aggregation
+All individual file processing futures are collected into a list as they are created. The framework then composes these futures using a composite future that completes only when all individual futures have finished.
+When the composite future completes, a mapping operation iterates through all results, summing the match counts and updating the model with the final total. This composition is declarative, with success handlers attached to process results when they become available.
+
+### Non blocking result handling
+The result handling follows a callback based pattern where success handlers are registered to execute when futures complete. This approach ensures the event loop remains free to handle other events while waiting for blocking operations to finish. Timing information is captured at the start of processing and compared against completion time to measure total execution duration.
+
+.mermaid 
+    flowchart TD
+    Start[VertxAsyncSearcher] --> Config[Configure Vert.x<br/>Worker Pool Size = CPU cores]
+    Config --> Deploy[Deploy PdfSearchVerticle]
+    
+    Deploy --> EventLoop[Event Loop Thread]
+    
+    EventLoop --> Submit1[Submit Blocking Task<br/>PDF 1]
+    EventLoop --> Submit2[Submit Blocking Task<br/>PDF 2]
+    EventLoop --> Submit3[Submit Blocking Task<br/>PDF N]
+    
+    Submit1 --> Future1[Future 1]
+    Submit2 --> Future2[Future 2]
+    Submit3 --> FutureN[Future N]
+    
+    Future1 --> Worker1[Worker Thread 1<br/>Extract & Search PDF 1]
+    Future2 --> Worker2[Worker Thread 2<br/>Extract & Search PDF 2]
+    FutureN --> WorkerN[Worker Thread N<br/>Extract & Search PDF N]
+    
+    Worker1 --> Update1[Update Model<br/>if match found]
+    Worker2 --> Update2[Update Model<br/>if match found]
+    WorkerN --> UpdateN[Update Model<br/>if match found]
+    
+    Update1 --> Result1[Return 0/1]
+    Update2 --> Result2[Return 0/1]
+    UpdateN --> ResultN[Return 0/1]
+    
+    Result1 --> Complete1[Future 1 Completes]
+    Result2 --> Complete2[Future 2 Completes]
+    ResultN --> CompleteN[Future N Completes]
+    
+    Complete1 --> Composite[Future.all<br/>Composite Future]
+    Complete2 --> Composite
+    CompleteN --> Composite
+    
+    Composite --> AllComplete{All Futures<br/>Complete?}
+    AllComplete -->|Yes| Map[Sum all results]
+    Map --> Success[Success Handler<br/>Print total & time]
+    
+    AllComplete -->|No| Wait[Event Loop Waits]
+    Wait -.-> Composite
+
+<<<
+## Reactive programming approach
+The reactive programming implementation uses RxJava to model PDF processing as a data stream. 
+
+### Hot observable stream creation
+The solution creates a hot observable stream by first defining a flowable source that emits processing results. The flowable is constructed using a custom emitter that iterates through all PDF files sequentially, processing each one and emitting integer values: 1 for files containing the target word, 0 otherwise.
+The emitter handles the complete lifecycle: it processes all files in a loop, emits results as they become available, signals completion when all files are processed, and propagates any errors encountered during execution. A **buffer backpressure strategy** is configured to handle situations where the consumer cannot keep up with emitted items.
+After creating the flowable, it is converted to a hot observable using the publish operator and immediately connected. 
+
+### flow control 
+The main processing pipeline applies a sequence of reactive operators to transform the stream. First, a backpressure buffer with a capacity of 5,000 items protects against overflow when the producer emits faster than the consumer can process.
+The reduce operator aggregates all emitted values into a single sum, effectively counting total matches across all PDFs. This reduction happens asynchronously as values flow through the stream.
+The pipeline concludes with a blocking subscription that waits for the final reduced value, executing success and error handlers when the stream completes.
+
+Unlike the final aggregation performed by the reduce operator, the model is updated immediately within the emitter loop whenever a match is found. This update strategy provides real-time UI feedback through incremental model updates while the reduce operator handles final result computation.
+
+.mermaid 
+    flowchart TD
+        Start[RxJavaSearcher] --> Create[Create Flowable<br/>with Custom Emitter]
+        
+        Create --> Loop[Iterate PDF Files<br/>in Emitter]
+        
+        Loop --> Process1[Process PDF 1<br/>containsWord]
+        Loop --> Process2[Process PDF 2<br/>containsWord]
+        Loop --> ProcessN[Process PDF N<br/>containsWord]
+        
+        Process1 --> Check1{Match Found?}
+        Process2 --> Check2{Match Found?}
+        ProcessN --> CheckN{Match Found?}
+        
+        Check1 -->|Yes| Update1[Update Model]
+        Check2 -->|Yes| Update2[Update Model]
+        CheckN -->|Yes| UpdateN[Update Model]
+        
+        Check1 -->|Always| Emit1[Emit 1 or 0]
+        Check2 -->|Always| Emit2[Emit 1 or 0]
+        CheckN -->|Always| EmitN[Emit 1 or 0]
+        
+        Update1 --> Emit1
+        Update2 --> Emit2
+        UpdateN --> EmitN
+        
+        Emit1 --> Hot[publish + connect<br/>Hot Observable]
+        Emit2 --> Hot
+        EmitN --> Hot
+        
+        Hot --> Buffer[onBackpressureBuffer<br/>capacity: 5000]
+        Buffer --> Reduce[reduce<br/>sum all values]
+        Reduce --> Schedule[observeOn<br/>Schedulers.computation]
+        Schedule --> Subscribe[blockingSubscribe<br/>wait for result]
+        Subscribe --> Final[Print Total Count<br/>+ Time]
+
+<<<
+## 
 
 
 

@@ -51,7 +51,7 @@
     </script>
 </head>
 <body class="quarkdown quarkdown-paged">
-<div class="page-margin-content page-margin-bottom-center" data-on-left-page="bottom-center" data-on-right-page="bottom-center"><p><span class="current-page-number">-</span> / <span class="total-page-number">-</span></p></div><div class="container fullwidth" style="justify-items: center; text-align: center;"><h1 id="report-p1" data-decorative="">Report p.1</h1><p>Mounir Samite 2026</p></div><hr /><div class="page-break" data-hidden=""></div><h1 id="table-of-contents">Table of Contents</h1><nav data-role="table-of-contents"><ol><li data-location="1"><a href="#problem-analisys">Problem analisys</a><ol><li data-location="1.1"><a href="#decomposition-strategy">Decomposition strategy</a></li><li data-location="1.2"><a href="#coordination-and-synchronization-challenges">Coordination and synchronization challenges</a></li></ol></li><li data-location="2"><a href="#solution-strategy-and-architecture">Solution strategy and architecture</a><ol><li data-location="2.1"><a href="#high-level-architecture">High-level architecture</a></li><li data-location="2.2"><a href="#thread-based-approach">Thread based approach</a></li><li data-location="2.3"><a href="#virtual-threads">Virtual Threads</a></li><li data-location="2.4"><a href="#task-based-approach">Task based approach</a></li><li data-location="2.5"><a href="#async-event-approach">Async event approach</a></li></ol></li></ol></nav><p></p><div class="page-break" data-hidden=""></div><h1 id="problem-analisys" data-location="1">Problem analisys</h1><p>The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a GUI.</p><h2 id="decomposition-strategy" data-location="1.1">Decomposition strategy</h2><p>The problem can be decomposed along two primary dimensions: task decomposition and data decomposition.
+<div class="page-margin-content page-margin-bottom-center" data-on-left-page="bottom-center" data-on-right-page="bottom-center"><p><span class="current-page-number">-</span> / <span class="total-page-number">-</span></p></div><div class="container fullwidth" style="justify-items: center; text-align: center;"><h1 id="report-p1" data-decorative="">Report p.1</h1><p>Mounir Samite 2026</p></div><hr /><div class="page-break" data-hidden=""></div><h1 id="table-of-contents">Table of Contents</h1><nav data-role="table-of-contents"><ol><li data-location="1"><a href="#problem-analisys">Problem analisys</a><ol><li data-location="1.1"><a href="#decomposition-strategy">Decomposition strategy</a></li><li data-location="1.2"><a href="#coordination-and-synchronization-challenges">Coordination and synchronization challenges</a></li></ol></li><li data-location="2"><a href="#solution-strategy-and-architecture">Solution strategy and architecture</a><ol><li data-location="2.1"><a href="#high-level-architecture">High-level architecture</a></li><li data-location="2.2"><a href="#thread-based-approach">Thread based approach</a></li><li data-location="2.3"><a href="#virtual-threads">Virtual Threads</a></li><li data-location="2.4"><a href="#task-based-approach">Task based approach</a></li><li data-location="2.5"><a href="#async-event-approach">Async event approach</a></li><li data-location="2.6"><a href="#reactive-programming-approach">Reactive programming approach</a></li><li data-location="2.7"><a href="#_"></a></li></ol></li></ol></nav><p></p><div class="page-break" data-hidden=""></div><h1 id="problem-analisys" data-location="1">Problem analisys</h1><p>The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a GUI.</p><h2 id="decomposition-strategy" data-location="1.1">Decomposition strategy</h2><p>The problem can be decomposed along two primary dimensions: task decomposition and data decomposition.
 Task decomposition involves breaking down the workflow into distinct
 operations:</p><ul><li>directory traversal</li><li>file identification</li><li>pdf text extraction</li><li>word matching</li><li>result aggregation</li></ul><p>While data decomposition focuses on partitioning the set of pdf files
 into chunks that can be processed concurrently.
@@ -81,7 +81,7 @@ maintaining code reusability and separation of concerns.</p><figure><pre class="
         S[PdfWordSearcher Interface]
         T1[Thread]
         T2[Virtual Thread]
-        T3[Task-Based]
+        T3[Task Based]
         T4[Async Event]
         T5[Reactive]
         T6[Actor]
@@ -322,6 +322,84 @@ R3 --&gt; Join1
 SubDir1Result --&gt; Join1
 SubDir2Result --&gt; Join1
 
-Join1 --&gt; Final[Total Count]</pre></figure><h2 id="async-event-approach" data-location="2.5">Async event approach</h2><p>The async event implementation uses the Vert.x framework, which provides an event loop architecture for non-blocking asynchronous processing.</p><h3 id="verticle" data-location="2.5.1">Verticle</h3>
+Join1 --&gt; Final[Total Count]</pre></figure><div class="page-break" data-hidden=""></div><h2 id="async-event-approach" data-location="2.5">Async event approach</h2><p>The async event implementation uses the Vert.x framework, which provides an event loop architecture for non-blocking asynchronous processing.</p><h3 id="verticle-based-architecture" data-location="2.5.1">Verticle based architecture</h3><p>The solution creates a custom verticle, which serves as the deployable unit of concurrent execution in Vert.x. The main searcher class configures a Vert.x instance with a worker pool sized to match available CPU cores, then deploys the PDF search verticle onto this runtime.
+The verticle encapsulates the entire search logic within its methods, receiving the list of PDF files, target word, and model reference through its constructor. When the verticle starts, it initiates the asynchronous processing pipeline.</p><h3 id="event-loop-and-worker-pool" data-location="2.5.2">Event loop and worker pool</h3><p>For each PDF file, the verticle submits a blocking task that extracts text and searches for the target word. These tasks execute on worker threads from the pool, preventing the event loop from blocking. Each blocking operation immediately returns a Future object representing the eventual completion of that task.</p><h3 id="future-composition-and-aggregation" data-location="2.5.3">Future Composition and aggregation</h3><p>All individual file processing futures are collected into a list as they are created. The framework then composes these futures using a composite future that completes only when all individual futures have finished.
+When the composite future completes, a mapping operation iterates through all results, summing the match counts and updating the model with the final total. This composition is declarative, with success handlers attached to process results when they become available.</p><h3 id="non-blocking-result-handling" data-location="2.5.4">Non blocking result handling</h3><p>The result handling follows a callback based pattern where success handlers are registered to execute when futures complete. This approach ensures the event loop remains free to handle other events while waiting for blocking operations to finish. Timing information is captured at the start of processing and compared against completion time to measure total execution duration.</p><figure><pre class="mermaid fill-height">flowchart TD
+Start[VertxAsyncSearcher] --&gt; Config[Configure Vert.x&lt;br/&gt;Worker Pool Size = CPU cores]
+Config --&gt; Deploy[Deploy PdfSearchVerticle]
+
+Deploy --&gt; EventLoop[Event Loop Thread]
+
+EventLoop --&gt; Submit1[Submit Blocking Task&lt;br/&gt;PDF 1]
+EventLoop --&gt; Submit2[Submit Blocking Task&lt;br/&gt;PDF 2]
+EventLoop --&gt; Submit3[Submit Blocking Task&lt;br/&gt;PDF N]
+
+Submit1 --&gt; Future1[Future 1]
+Submit2 --&gt; Future2[Future 2]
+Submit3 --&gt; FutureN[Future N]
+
+Future1 --&gt; Worker1[Worker Thread 1&lt;br/&gt;Extract &amp; Search PDF 1]
+Future2 --&gt; Worker2[Worker Thread 2&lt;br/&gt;Extract &amp; Search PDF 2]
+FutureN --&gt; WorkerN[Worker Thread N&lt;br/&gt;Extract &amp; Search PDF N]
+
+Worker1 --&gt; Update1[Update Model&lt;br/&gt;if match found]
+Worker2 --&gt; Update2[Update Model&lt;br/&gt;if match found]
+WorkerN --&gt; UpdateN[Update Model&lt;br/&gt;if match found]
+
+Update1 --&gt; Result1[Return 0/1]
+Update2 --&gt; Result2[Return 0/1]
+UpdateN --&gt; ResultN[Return 0/1]
+
+Result1 --&gt; Complete1[Future 1 Completes]
+Result2 --&gt; Complete2[Future 2 Completes]
+ResultN --&gt; CompleteN[Future N Completes]
+
+Complete1 --&gt; Composite[Future.all&lt;br/&gt;Composite Future]
+Complete2 --&gt; Composite
+CompleteN --&gt; Composite
+
+Composite --&gt; AllComplete{All Futures&lt;br/&gt;Complete?}
+AllComplete --&gt;|Yes| Map[Sum all results]
+Map --&gt; Success[Success Handler&lt;br/&gt;Print total &amp; time]
+
+AllComplete --&gt;|No| Wait[Event Loop Waits]
+Wait -.-&gt; Composite</pre></figure><div class="page-break" data-hidden=""></div><h2 id="reactive-programming-approach" data-location="2.6">Reactive programming approach</h2><p>The reactive programming implementation uses RxJava to model PDF processing as a data stream.</p><h3 id="hot-observable-stream-creation" data-location="2.6.1">Hot observable stream creation</h3><p>The solution creates a hot observable stream by first defining a flowable source that emits processing results. The flowable is constructed using a custom emitter that iterates through all PDF files sequentially, processing each one and emitting integer values: 1 for files containing the target word, 0 otherwise.
+The emitter handles the complete lifecycle: it processes all files in a loop, emits results as they become available, signals completion when all files are processed, and propagates any errors encountered during execution. A <strong>buffer backpressure strategy</strong> is configured to handle situations where the consumer cannot keep up with emitted items.
+After creating the flowable, it is converted to a hot observable using the publish operator and immediately connected.</p><h3 id="flow-control" data-location="2.6.2">flow control</h3><p>The main processing pipeline applies a sequence of reactive operators to transform the stream. First, a backpressure buffer with a capacity of 5,000 items protects against overflow when the producer emits faster than the consumer can process.
+The reduce operator aggregates all emitted values into a single sum, effectively counting total matches across all PDFs. This reduction happens asynchronously as values flow through the stream.
+The pipeline concludes with a blocking subscription that waits for the final reduced value, executing success and error handlers when the stream completes.</p><p>Unlike the final aggregation performed by the reduce operator, the model is updated immediately within the emitter loop whenever a match is found. This update strategy provides real-time UI feedback through incremental model updates while the reduce operator handles final result computation.</p><figure><pre class="mermaid fill-height">flowchart TD
+    Start[RxJavaSearcher] --&gt; Create[Create Flowable&lt;br/&gt;with Custom Emitter]
+    
+    Create --&gt; Loop[Iterate PDF Files&lt;br/&gt;in Emitter]
+    
+    Loop --&gt; Process1[Process PDF 1&lt;br/&gt;containsWord]
+    Loop --&gt; Process2[Process PDF 2&lt;br/&gt;containsWord]
+    Loop --&gt; ProcessN[Process PDF N&lt;br/&gt;containsWord]
+    
+    Process1 --&gt; Check1{Match Found?}
+    Process2 --&gt; Check2{Match Found?}
+    ProcessN --&gt; CheckN{Match Found?}
+    
+    Check1 --&gt;|Yes| Update1[Update Model]
+    Check2 --&gt;|Yes| Update2[Update Model]
+    CheckN --&gt;|Yes| UpdateN[Update Model]
+    
+    Check1 --&gt;|Always| Emit1[Emit 1 or 0]
+    Check2 --&gt;|Always| Emit2[Emit 1 or 0]
+    CheckN --&gt;|Always| EmitN[Emit 1 or 0]
+    
+    Update1 --&gt; Emit1
+    Update2 --&gt; Emit2
+    UpdateN --&gt; EmitN
+    
+    Emit1 --&gt; Hot[publish + connect&lt;br/&gt;Hot Observable]
+    Emit2 --&gt; Hot
+    EmitN --&gt; Hot
+    
+    Hot --&gt; Buffer[onBackpressureBuffer&lt;br/&gt;capacity: 5000]
+    Buffer --&gt; Reduce[reduce&lt;br/&gt;sum all values]
+    Reduce --&gt; Schedule[observeOn&lt;br/&gt;Schedulers.computation]
+    Schedule --&gt; Subscribe[blockingSubscribe&lt;br/&gt;wait for result]
+    Subscribe --&gt; Final[Print Total Count&lt;br/&gt;+ Time]</pre></figure><div class="page-break" data-hidden=""></div><h2 id="_" data-location="2.7"></h2>
 </body>
 </html>
