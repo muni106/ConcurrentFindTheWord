@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html lang="en">
+<head>
+    <meta name="generator" content="Quarkdown">
+    <meta charset="UTF-8">
+    <meta name="author" content="Mounir Samite">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report</title>
+    <script src="./script/quarkdown.js"></script>
+    <script>const capabilities = window.quarkdownCapabilities</script>
+    <script>window.PagedConfig = {auto: false};</script>
+    <script src="https://unpkg.com/pagedjs@0.4.3/dist/paged.polyfill.js"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="./theme/theme.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>capabilities.mermaid = true;</script>
+
+    <style>
+
+        body {
+        }
+
+        .page-break {
+            break-before: always;
+        }
+
+        .quarkdown-plain .page-break {
+            break-before: avoid;
+            break-after: avoid;
+        }
+
+        body.quarkdown-plain.quarkdown-plain {
+        }
+
+        body.quarkdown-slides.quarkdown-slides .reveal {
+            width: 210.0mm;
+            height: 297.0mm;
+        }
+
+        @page {
+            size: 210.0mm 297.0mm;
+        }
+
+        p {
+        }
+    </style>
+    <script>
+        const doc = new PagedDocument();
+        prepare(doc);
+    </script>
+</head>
+<body class="quarkdown quarkdown-paged">
+<div class="page-margin-content page-margin-bottom-center" data-on-left-page="bottom-center" data-on-right-page="bottom-center"><p><span class="current-page-number">-</span> / <span class="total-page-number">-</span></p></div><div class="container fullwidth" style="justify-items: center; text-align: center;"><h1 id="report" data-decorative="">Report</h1><p>Mounir Samite 2026</p></div><hr /><div class="page-break" data-hidden=""></div><h1 id="table-of-contents">Table of Contents</h1><nav data-role="table-of-contents"><ol><li data-location="1"><a href="#problem-analisys">Problem analisys</a><ol><li data-location="1.1"><a href="#decomposition-strategy">Decomposition strategy</a></li><li data-location="1.2"><a href="#coordination-and-synchronization-challenges">Coordination and synchronization challenges</a></li></ol></li><li data-location="2"><a href="#solution-strategy-and-architecture">Solution strategy and architecture</a><ol><li data-location="2.1"><a href="#high-level-architecture">High-level architecture</a></li></ol></li><li data-location="3"><a href="#performance">Performance</a></li><li data-location="4"><a href="#correctness">Correctness</a></li></ol></nav><p></p><div class="page-break" data-hidden=""></div><h1 id="problem-analisys" data-location="1">Problem analisys</h1><p>The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a GUI.</p><h2 id="decomposition-strategy" data-location="1.1">Decomposition strategy</h2><p>The problem can be decomposed along two primary dimensions: task decomposition and data decomposition.
+Task decomposition involves breaking down the workflow into distinct
+operations:</p><ul><li>directory traversal</li><li>file identification</li><li>pdf text extraction</li><li>word matching</li><li>result aggregation</li></ul><p>While data decomposition focuses on partitioning the set of pdf files
+into chunks that can be processed concurrently.
+The initial sequential implementation revealed that pdf files constitute
+independent units of work, as analyzing one file does not depend on the
+results of analyzing another, making them ideal candidates for parallel processing.</p><h2 id="coordination-and-synchronization-challenges" data-location="1.2">Coordination and synchronization challenges</h2><p>Despite the high degree of independence, several coordination
+points require careful synchronization.
+The shared counters (total files analyzed, PDFs found,
+PDFs containing the target word) represent critical sections
+that must be protected against race conditions when multiple threads
+update them concurrently.
+Additionally, the GUI updates must be coordinated to ensure
+consistent and accurate display of progress without overwhelming
+the event dispatch thread.
+The start, stop, suspend, resume controls introduce additional
+complexity, requiring mechanisms to pause and resume worker threads
+cooperatively while maintaining system state consistency.</p><div class="page-break" data-hidden=""></div><h1 id="solution-strategy-and-architecture" data-location="2">Solution strategy and architecture</h1><h2 id="high-level-architecture" data-location="2.1">High-level architecture</h2><p>The project adopts a modular architecture that combines the Model-View-Controller 
+pattern with the Strategy pattern to accommodate six distinct concurrency approaches while
+maintaining code reusability and separation of concerns.</p><figure><pre class="mermaid fill-height">flowchart TD
+    subgraph MVC[&quot;MVC Pattern&quot;]
+        V[SearchView]
+        C[SearchController]
+        M[SearchModel]
+    end
+    
+    subgraph Strategies[&quot;Strategy Pattern&quot;]
+        S[PdfWordSearcher Interface]
+        T1[Thread]
+        T2[Virtual Thread]
+        T3[Task-Based]
+        T4[Async Event]
+        T5[Reactive]
+        T6[Actor]
+    end
+    
+    E[ExtractionEvent]
+    
+    V --&gt; C
+    C --&gt; M
+    M --&gt; V
+    C --&gt; S
+    
+    S --&gt; T1
+    S --&gt; T2
+    S --&gt; T3
+    S --&gt; T4
+    S --&gt; T5
+    S --&gt; T6
+    
+    T1 --&gt; E
+    T2 --&gt; E
+    T3 --&gt; E
+    T4 --&gt; E
+    T5 --&gt; E
+    T6 --&gt; E
+    
+    E --&gt; M</pre></figure><h3 id="core-architecture-components" data-location="2.1.1">Core architecture components</h3><p>The application&rsquo;s backbone consists of three primary MVC
+components that remain consistent across all concurrency implementations:</p><ul><li><strong>SearchModel</strong>: Encapsulates the application state, including counters for analyzed files, PDF files found, and matches containing the target word. This model serves as the single source of truth and notifies observers of state changes</li><li><strong>SearchView</strong>: Provides the graphical user interface with input fields for directory path and search word, control buttons (start/stop/suspend/resume), and output boxes displaying real-time progress</li><li><strong>SearchController</strong>: Mediates between the view and model, handling user interactions and delegating work to the appropriate concurrency strategy implementation</li></ul><p>The ModelObserver interface implements the Observer pattern, enabling the view to react to model state changes without tight coupling, ensuring that GUI updates remain synchronized with the underlying computational progress.</p><h3 id="strategy-pattern" data-location="2.1.2">Strategy pattern</h3><p>The core of this architecture lies in the strategies package,
+which encapsulates each concurrency approach as an interchangeable implementation
+of the PdfWordSearcher interface.
+This design decision allows the controller to remain agnostic to the underlying concurrency
+mechanism while supporting six fundamentally different approaches:</p><ul><li><strong>thread</strong>: Implements traditional multithreaded approach using custom monitors and thread pools</li><li><strong>virtual threads</strong>: Leverages Java virtual threads for lightweight concurrency</li><li><strong>task based</strong>: Utilizes Java Executors and Fork/Join framework with task decomposition</li><li><strong>async event</strong>: Employs Vertx event-loop architecture for asynchronous processing</li><li><strong>reactive programming</strong>: Applies RxJava reactive streams for data flow management</li><li><strong>actors</strong>: Uses Akka actor model for message-passing concurrency</li></ul><p>Each strategy package contains specialized components tailored to its concurrency model while adhering to a common interface,
+ensuring seamless swapping between implementations.</p><h3 id="event-system" data-location="2.1.3">Event system</h3><p>The events package defines a unified event model (ExtractionEvent and ExtractionEventType)
+that enables consistent communication between Model, Controller and View.
+This abstraction allows different strategies to report progress using the same event types
+regardless of their internal implementation details.
+​</p><h3 id="supporting-infrastructure" data-location="2.1.4">Supporting infrastructure</h3><p>The project structure includes dedicated components for testing and validation:</p><ul><li>generator: Contains scripts and sample PDFs for creating test datasets with varying file counts and directory depths</li><li>pdfs: Houses multiple test scenarios ranging from small sets (3-10 files) to large-scale tests (50,000+ files) with both flat and recursive directory structures</li><li>jpf-workspace: Provides Java PathFinder integration for formal verification of concurrent properties in the thread-based implementation</li></ul><p>This organizational structure ensures that each concurrency strategy can be developed,
+tested, and analyzed independently while sharing common infrastructure components,
+facilitating comparative performance analysis across all six approaches.</p><div class="page-break" data-hidden=""></div><h1 id="performance" data-location="3">Performance</h1><div class="page-break" data-hidden=""></div><h1 id="correctness" data-location="4">Correctness</h1><p>about the Thread based strategy, considering these are my notes:</p><ul><li>In the thread based approach I divided the chunks of pdfs based on the number of available physical CPUs in the moment so I created Threads based on that number:
+<span class="codespan-content"><code>int Nthreads = Ncpu + 1;</code></span></li></ul><p>Then I implemented monitor with workers &rArr; one worker named Output waiting for the others to return the result</p>
+</body>
+</html>

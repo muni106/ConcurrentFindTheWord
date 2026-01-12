@@ -1,0 +1,160 @@
+.docname {Report}
+.doctype {paged}
+.doclang {English}
+.theme {paperwhite} layout:{latex}
+
+.docauthors
+  - Mounir Samite
+    - email: mounir.samite@studio.unibo.it
+
+.pagemargin {bottomcenter}
+    .currentpage / .totalpages 
+
+.align {center} 
+    #! .docname 
+    .docauthor 2026
+
+---
+
+
+.tableofcontents maxdepth:{2} 
+
+# Problem analisys
+The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a GUI.
+
+## Decomposition strategy
+The problem can be decomposed along two primary dimensions: task decomposition and data decomposition.
+Task decomposition involves breaking down the workflow into distinct
+operations:
+- directory traversal
+- file identification
+- pdf text extraction
+- word matching
+- result aggregation
+
+While data decomposition focuses on partitioning the set of pdf files
+into chunks that can be processed concurrently.
+The initial sequential implementation revealed that pdf files constitute
+independent units of work, as analyzing one file does not depend on the
+results of analyzing another, making them ideal candidates for parallel processing.
+
+## Coordination and synchronization challenges
+Despite the high degree of independence, several coordination
+points require careful synchronization.
+The shared counters (total files analyzed, PDFs found,
+PDFs containing the target word) represent critical sections
+that must be protected against race conditions when multiple threads
+update them concurrently.
+Additionally, the GUI updates must be coordinated to ensure
+consistent and accurate display of progress without overwhelming
+the event dispatch thread.
+The start, stop, suspend, resume controls introduce additional
+complexity, requiring mechanisms to pause and resume worker threads
+cooperatively while maintaining system state consistency.
+
+
+# Solution strategy and architecture
+## High-level architecture
+The project adopts a modular architecture that combines the Model-View-Controller 
+pattern with the Strategy pattern to accommodate six distinct concurrency approaches while
+maintaining code reusability and separation of concerns.
+
+.mermaid 
+    flowchart TD
+        subgraph MVC["MVC Pattern"]
+            V[SearchView]
+            C[SearchController]
+            M[SearchModel]
+        end
+        
+        subgraph Strategies["Strategy Pattern"]
+            S[PdfWordSearcher Interface]
+            T1[Thread]
+            T2[Virtual Thread]
+            T3[Task-Based]
+            T4[Async Event]
+            T5[Reactive]
+            T6[Actor]
+        end
+        
+        E[ExtractionEvent]
+        
+        V --> C
+        C --> M
+        M --> V
+        C --> S
+        
+        S --> T1
+        S --> T2
+        S --> T3
+        S --> T4
+        S --> T5
+        S --> T6
+        
+        T1 --> E
+        T2 --> E
+        T3 --> E
+        T4 --> E
+        T5 --> E
+        T6 --> E
+        
+        E --> M
+
+### Core architecture components
+The application's backbone consists of three primary MVC
+components that remain consistent across all concurrency implementations:
+- **SearchModel**: Encapsulates the application state, including counters for analyzed files, PDF files found, and matches containing the target word. This model serves as the single source of truth and notifies observers of state changes
+- **SearchView**: Provides the graphical user interface with input fields for directory path and search word, control buttons (start/stop/suspend/resume), and output boxes displaying real-time progress
+- **SearchController**: Mediates between the view and model, handling user interactions and delegating work to the appropriate concurrency strategy implementation
+
+The ModelObserver interface implements the Observer pattern, enabling the view to react to model state changes without tight coupling, ensuring that GUI updates remain synchronized with the underlying computational progress.
+
+### Strategy pattern
+The core of this architecture lies in the strategies package,
+which encapsulates each concurrency approach as an interchangeable implementation
+of the PdfWordSearcher interface.
+This design decision allows the controller to remain agnostic to the underlying concurrency
+mechanism while supporting six fundamentally different approaches:
+- **thread**: Implements traditional multithreaded approach using custom monitors and thread pools
+- **virtual threads**: Leverages Java virtual threads for lightweight concurrency
+- **task based**: Utilizes Java Executors and Fork/Join framework with task decomposition
+- **async event**: Employs Vertx event-loop architecture for asynchronous processing
+- **reactive programming**: Applies RxJava reactive streams for data flow management
+- **actors**: Uses Akka actor model for message-passing concurrency
+
+Each strategy package contains specialized components tailored to its concurrency model while adhering to a common interface,
+ensuring seamless swapping between implementations.
+
+### Event system
+The events package defines a unified event model (ExtractionEvent and ExtractionEventType)
+that enables consistent communication between Model, Controller and View.
+This abstraction allows different strategies to report progress using the same event types
+regardless of their internal implementation details.
+​
+### Supporting infrastructure
+The project structure includes dedicated components for testing and validation:
+
+- generator: Contains scripts and sample PDFs for creating test datasets with varying file counts and directory depths
+- pdfs: Houses multiple test scenarios ranging from small sets (3-10 files) to large-scale tests (50,000+ files) with both flat and recursive directory structures
+- jpf-workspace: Provides Java PathFinder integration for formal verification of concurrent properties in the thread-based implementation
+
+This organizational structure ensures that each concurrency strategy can be developed,
+tested, and analyzed independently while sharing common infrastructure components,
+facilitating comparative performance analysis across all six approaches.
+
+
+
+
+
+# Performance 
+
+# Correctness
+
+about the Thread based strategy, considering these are my notes:
+- In the thread based approach I divided the chunks of pdfs based on the number of available physical CPUs in the moment so I created Threads based on that number:
+`int Nthreads = Ncpu + 1;`
+
+Then I implemented monitor with workers => one worker named Output waiting for the others to return the result
+
+
+
