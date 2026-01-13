@@ -535,14 +535,67 @@ Unlike the final aggregation performed by the reduce operator, the model is upda
         Subscribe --> Final[Print Total Count<br/>+ Time]
 
 <<<
-## 
+## Actor approach 
+The actor based implementation uses the Akka framework to model PDF processing as independent actors communicating through asynchronous message passing.
+
+### Actors
+The solution creates an Akka actor system named `PdfCounter` that serves as the runtime environment for all actors. Two actor types are instantiated: a single analyzer actor that processes all PDF files and maintains the match count, and a requester actor that retrieves the final result and terminates the system.
+
+The analyzer actor is created first and receives its reference, which serves as its mailbox address for incoming messages. After all processing messages are sent, the requester actor is created and sent a query message to retrieve the accumulated count.
+
+### Messages
+The implementation defines two message types as immutable data classes. The processing message encapsulates a PDF file reference, the search word, and the model to update, bundling all necessary information for a single file analysis task. The query message is a simple marker class that signals the actor should respond with its current count.
+
+Messages are sent using the tell method, which provides asynchronous delivery without blocking the sender. For processing messages, no sender reference is provided since no response is expected. For the query message, the requester actor's reference is provided so the analyzer knows where to send the final count.
 
 
 
+### Actor behavior
+The analyzer actor defines its behavior through a receive builder that pattern-matches incoming messages. When it receives a processing message, it executes the PDF text extraction, searches for the word, increments its internal count if a match is found, and updates the model.
+When it receives a query message, it responds by sending its accumulated count back to the sender using the sender reference automatically captured from the incoming message context. 
 
 
+.mermaid 
+    flowchart TD
+    Start([Start]) --> CreateSystem[Create ActorSystem<br/>PdfCounter]
+    CreateSystem --> CreateAnalyzer[Create PdfAnalyzerActor]
+    
+    CreateAnalyzer --> SendLoop{More PDFs?}
+    SendLoop -->|Yes| SendMsg[Send PdfWordMessage<br/>to Analyzer]
+    SendMsg --> SendLoop
+    SendLoop -->|No| CreateReq[Create RequesterActor]
+    
+    CreateReq --> SendQuery[Send GetCount<br/>to Analyzer with<br/>Requester ref]
+    
+    SendQuery --> AnalyzerProcess
+    
+    subgraph AnalyzerProcess[PdfAnalyzerActor Processing]
+        ReceiveMsg{Receive<br/>Message}
+        ReceiveMsg -->|PdfWordMessage| Load[Load PDF &<br/>Extract Text]
+        Load --> Search{Contains<br/>Word?}
+        Search -->|Yes| IncCount[Increment Count]
+        Search -->|No| Skip[Skip]
+        IncCount --> UpdateModel[Update Model]
+        UpdateModel --> NextMsg[Next Message]
+        Skip --> NextMsg
+        NextMsg --> ReceiveMsg
+        
+        ReceiveMsg -->|GetCount| SendCount[Send Count<br/>to Requester]
+    end
+    
+    SendCount --> RequesterReceive
+    
+    subgraph RequesterReceive[RequesterActor Processing]
+        Receive[Receive Count]
+        Receive --> LogResult[Log Result]
+        LogResult --> Terminate[Terminate ActorSystem]
+    end
+    
+    Terminate --> End([End])
+    
 
-
+<<<
+# Performance
 
 
 

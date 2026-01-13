@@ -51,7 +51,7 @@
     </script>
 </head>
 <body class="quarkdown quarkdown-paged">
-<div class="page-margin-content page-margin-bottom-center" data-on-left-page="bottom-center" data-on-right-page="bottom-center"><p><span class="current-page-number">-</span> / <span class="total-page-number">-</span></p></div><div class="container fullwidth" style="justify-items: center; text-align: center;"><h1 id="report-p1" data-decorative="">Report p.1</h1><p>Mounir Samite 2026</p></div><hr /><div class="page-break" data-hidden=""></div><h1 id="table-of-contents">Table of Contents</h1><nav data-role="table-of-contents"><ol><li data-location="1"><a href="#problem-analisys">Problem analisys</a><ol><li data-location="1.1"><a href="#decomposition-strategy">Decomposition strategy</a></li><li data-location="1.2"><a href="#coordination-and-synchronization-challenges">Coordination and synchronization challenges</a></li></ol></li><li data-location="2"><a href="#solution-strategy-and-architecture">Solution strategy and architecture</a><ol><li data-location="2.1"><a href="#high-level-architecture">High-level architecture</a></li><li data-location="2.2"><a href="#thread-based-approach">Thread based approach</a></li><li data-location="2.3"><a href="#virtual-threads">Virtual Threads</a></li><li data-location="2.4"><a href="#task-based-approach">Task based approach</a></li><li data-location="2.5"><a href="#async-event-approach">Async event approach</a></li><li data-location="2.6"><a href="#reactive-programming-approach">Reactive programming approach</a></li><li data-location="2.7"><a href="#_"></a></li></ol></li></ol></nav><p></p><div class="page-break" data-hidden=""></div><h1 id="problem-analisys" data-location="1">Problem analisys</h1><p>The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a GUI.</p><h2 id="decomposition-strategy" data-location="1.1">Decomposition strategy</h2><p>The problem can be decomposed along two primary dimensions: task decomposition and data decomposition.
+<div class="page-margin-content page-margin-bottom-center" data-on-left-page="bottom-center" data-on-right-page="bottom-center"><p><span class="current-page-number">-</span> / <span class="total-page-number">-</span></p></div><div class="container fullwidth" style="justify-items: center; text-align: center;"><h1 id="report-p1" data-decorative="">Report p.1</h1><p>Mounir Samite 2026</p></div><hr /><div class="page-break" data-hidden=""></div><h1 id="table-of-contents">Table of Contents</h1><nav data-role="table-of-contents"><ol><li data-location="1"><a href="#problem-analisys">Problem analisys</a><ol><li data-location="1.1"><a href="#decomposition-strategy">Decomposition strategy</a></li><li data-location="1.2"><a href="#coordination-and-synchronization-challenges">Coordination and synchronization challenges</a></li></ol></li><li data-location="2"><a href="#solution-strategy-and-architecture">Solution strategy and architecture</a><ol><li data-location="2.1"><a href="#high-level-architecture">High-level architecture</a></li><li data-location="2.2"><a href="#thread-based-approach">Thread based approach</a></li><li data-location="2.3"><a href="#virtual-threads">Virtual Threads</a></li><li data-location="2.4"><a href="#task-based-approach">Task based approach</a></li><li data-location="2.5"><a href="#async-event-approach">Async event approach</a></li><li data-location="2.6"><a href="#reactive-programming-approach">Reactive programming approach</a></li><li data-location="2.7"><a href="#actor-approach">Actor approach</a></li></ol></li><li data-location="3"><a href="#performance">Performance</a></li></ol></nav><p></p><div class="page-break" data-hidden=""></div><h1 id="problem-analisys" data-location="1">Problem analisys</h1><p>The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a GUI.</p><h2 id="decomposition-strategy" data-location="1.1">Decomposition strategy</h2><p>The problem can be decomposed along two primary dimensions: task decomposition and data decomposition.
 Task decomposition involves breaking down the workflow into distinct
 operations:</p><ul><li>directory traversal</li><li>file identification</li><li>pdf text extraction</li><li>word matching</li><li>result aggregation</li></ul><p>While data decomposition focuses on partitioning the set of pdf files
 into chunks that can be processed concurrently.
@@ -400,6 +400,42 @@ The pipeline concludes with a blocking subscription that waits for the final red
     Buffer --&gt; Reduce[reduce&lt;br/&gt;sum all values]
     Reduce --&gt; Schedule[observeOn&lt;br/&gt;Schedulers.computation]
     Schedule --&gt; Subscribe[blockingSubscribe&lt;br/&gt;wait for result]
-    Subscribe --&gt; Final[Print Total Count&lt;br/&gt;+ Time]</pre></figure><div class="page-break" data-hidden=""></div><h2 id="_" data-location="2.7"></h2>
+    Subscribe --&gt; Final[Print Total Count&lt;br/&gt;+ Time]</pre></figure><div class="page-break" data-hidden=""></div><h2 id="actor-approach" data-location="2.7">Actor approach</h2><p>The actor based implementation uses the Akka framework to model PDF processing as independent actors communicating through asynchronous message passing.</p><h3 id="actors" data-location="2.7.1">Actors</h3><p>The solution creates an Akka actor system named <span class="codespan-content"><code>PdfCounter</code></span> that serves as the runtime environment for all actors. Two actor types are instantiated: a single analyzer actor that processes all PDF files and maintains the match count, and a requester actor that retrieves the final result and terminates the system.</p><p>The analyzer actor is created first and receives its reference, which serves as its mailbox address for incoming messages. After all processing messages are sent, the requester actor is created and sent a query message to retrieve the accumulated count.</p><h3 id="messages" data-location="2.7.2">Messages</h3><p>The implementation defines two message types as immutable data classes. The processing message encapsulates a PDF file reference, the search word, and the model to update, bundling all necessary information for a single file analysis task. The query message is a simple marker class that signals the actor should respond with its current count.</p><p>Messages are sent using the tell method, which provides asynchronous delivery without blocking the sender. For processing messages, no sender reference is provided since no response is expected. For the query message, the requester actor&rsquo;s reference is provided so the analyzer knows where to send the final count.</p><h3 id="actor-behavior" data-location="2.7.3">Actor behavior</h3><p>The analyzer actor defines its behavior through a receive builder that pattern-matches incoming messages. When it receives a processing message, it executes the PDF text extraction, searches for the word, increments its internal count if a match is found, and updates the model.
+When it receives a query message, it responds by sending its accumulated count back to the sender using the sender reference automatically captured from the incoming message context.</p><figure><pre class="mermaid fill-height">flowchart TD
+Start([Start]) --&gt; CreateSystem[Create ActorSystem&lt;br/&gt;PdfCounter]
+CreateSystem --&gt; CreateAnalyzer[Create PdfAnalyzerActor]
+
+CreateAnalyzer --&gt; SendLoop{More PDFs?}
+SendLoop --&gt;|Yes| SendMsg[Send PdfWordMessage&lt;br/&gt;to Analyzer]
+SendMsg --&gt; SendLoop
+SendLoop --&gt;|No| CreateReq[Create RequesterActor]
+
+CreateReq --&gt; SendQuery[Send GetCount&lt;br/&gt;to Analyzer with&lt;br/&gt;Requester ref]
+
+SendQuery --&gt; AnalyzerProcess
+
+subgraph AnalyzerProcess[PdfAnalyzerActor Processing]
+    ReceiveMsg{Receive&lt;br/&gt;Message}
+    ReceiveMsg --&gt;|PdfWordMessage| Load[Load PDF &amp;&lt;br/&gt;Extract Text]
+    Load --&gt; Search{Contains&lt;br/&gt;Word?}
+    Search --&gt;|Yes| IncCount[Increment Count]
+    Search --&gt;|No| Skip[Skip]
+    IncCount --&gt; UpdateModel[Update Model]
+    UpdateModel --&gt; NextMsg[Next Message]
+    Skip --&gt; NextMsg
+    NextMsg --&gt; ReceiveMsg
+    
+    ReceiveMsg --&gt;|GetCount| SendCount[Send Count&lt;br/&gt;to Requester]
+end
+
+SendCount --&gt; RequesterReceive
+
+subgraph RequesterReceive[RequesterActor Processing]
+    Receive[Receive Count]
+    Receive --&gt; LogResult[Log Result]
+    LogResult --&gt; Terminate[Terminate ActorSystem]
+end
+
+Terminate --&gt; End([End])</pre></figure><div class="page-break" data-hidden=""></div><div class="page-break" data-hidden=""></div><h1 id="performance" data-location="3">Performance</h1>
 </body>
 </html>
