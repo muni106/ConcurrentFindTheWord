@@ -593,9 +593,8 @@ When it receives a query message, it responds by sending its accumulated count b
     
     Terminate --> End([End])
     
-
-<<<
 # Performance
+
 
 
 

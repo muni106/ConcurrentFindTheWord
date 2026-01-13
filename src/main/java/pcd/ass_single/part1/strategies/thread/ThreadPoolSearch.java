@@ -24,6 +24,10 @@ public class ThreadPoolSearch implements PdfWordSearcher {
             int numFiles = files.size();
             m = new Monitor(numFiles, model);
 
+            if (numFiles == 0) {
+                System.out.println("No files?!?");
+                return;
+            }
             if (numFiles < Ncpu) {
                 Nthreads = numFiles;
             }

@@ -14,8 +14,10 @@ public class SearchModel {
     private volatile int countPdfFiles;
     private volatile int countPdfFilesWithWord;
     private List<File> pdfs;
+    private final PdfWordSearcher searcher;
 
-    public SearchModel(){
+    public SearchModel(PdfWordSearcher searcher){
+        this.searcher = searcher;
         countFiles = 0;
         countPdfFiles = 0;
         countPdfFilesWithWord = 0;
@@ -32,9 +34,8 @@ public class SearchModel {
     }
 
     private void scrapePdfsWithWord(String searchedWord) {
-        PdfWordSearcher textScraper = new BasicSearch();
         try {
-            textScraper.extractText(pdfs, searchedWord, this);
+            searcher.extractText(pdfs, searchedWord, this);
         } catch ( Exception e ) {
             System.err.println(e.getMessage());
         }
