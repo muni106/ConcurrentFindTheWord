@@ -41,7 +41,14 @@ public class ThreadPoolSearch implements PdfWordSearcher {
             }
 
             new Worker(m, i, numFiles, files, word, model).start();
-            new Output(m, startTime).start();
+            Thread output = new Output(m, startTime);
+
+            output.start();
+            try {
+                output.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }else {
             System.err.println("No files found");
         }

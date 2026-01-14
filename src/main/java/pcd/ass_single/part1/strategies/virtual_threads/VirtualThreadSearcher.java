@@ -38,7 +38,7 @@ public class VirtualThreadSearcher implements PdfWordSearcher {
                             .ofVirtual()
                             .name("workerThread[" + i + "]")
                             .start(() -> {
-                                System.out.println("Hello from " + Thread.currentThread());
+//                                System.out.println("Hello from " + Thread.currentThread());
                                 try {
                                     m.foundWord(containsWord(files.get(i), word));
                                 } catch (IOException e) {

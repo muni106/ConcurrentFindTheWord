@@ -1,5 +1,6 @@
-package pcd.ass_single.part1;
+package pcd.ass_single.part1.benchmarks;
 
+import pcd.ass_single.part1.SearchModel;
 import pcd.ass_single.part1.strategies.BasicSearch;
 import pcd.ass_single.part1.strategies.PdfWordSearcher;
 import pcd.ass_single.part1.strategies.actors.ActorBasedSearcher;
@@ -11,9 +12,10 @@ import pcd.ass_single.part1.strategies.virtual_threads.VirtualThreadSearcher;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class Benchmark {
+import static pcd.ass_single.part1.benchmarks.BenchmarkCommon.collectPdfFiles;
+
+public class AsyncBenchmark {
     static SearchModel placeholderModel = new SearchModel(new BasicSearch());
     static String word = "goku";
     public static void main(String[] args) throws Exception {
@@ -21,18 +23,8 @@ public class Benchmark {
         // SETUP
         PdfWordSearcher singleThreadedSearcher = new BasicSearch();
         List<Long> singleThreadedTimes = new ArrayList<>();
-        PdfWordSearcher threadPoolSearcher = new ThreadPoolSearch();
-        List<Long> threadPoolTimes = new ArrayList<>();
-        PdfWordSearcher virtualThreadPoolSearcher = new VirtualThreadSearcher();
-        List<Long> virtualThreadPoolTimes = new ArrayList<>();
-        PdfWordSearcher forkJoinSearcher = new ForkJoinSearcher();
-        List<Long> forkJoinTimes = new ArrayList<>();
-        PdfWordSearcher reactiveSearcher = new RxJavaSearcher();
-        List<Long> reactiveTimes = new ArrayList<>();
         PdfWordSearcher asyncEventBasedSearcher = new VertxAsyncSearcher();
         List<Long> asyncEventBasedTimes = new ArrayList<>();
-        PdfWordSearcher actorBasedSearcher = new ActorBasedSearcher();
-        List<Long> actorBasedTimes = new ArrayList<>();
 
         File pdfsDir = new File("pdfs");
         List<String> testFolders = Arrays.stream(Objects.requireNonNull(pdfsDir.listFiles()))
@@ -51,23 +43,20 @@ public class Benchmark {
         final Integer numExecutions = 7;
 
         individualBenchmarker(testFolders, fileLists, singleThreadedSearcher, singleThreadedTimes);
-        individualBenchmarker(testFolders, fileLists, threadPoolSearcher, threadPoolTimes);
-
+        individualBenchmarker(testFolders, fileLists, asyncEventBasedSearcher, asyncEventBasedTimes);
+        log("THREADS-based approach benchmark:");
         for (int i = 0; i < singleThreadedTimes.size(); i++) {
             log(testFolders.get(i));
-            log("speedup = " + (singleThreadedTimes.get(i) / threadPoolTimes.get(i)));
+            log("speedup = " + (singleThreadedTimes.get(i) / asyncEventBasedTimes.get(i)));
         }
-
-
-
-
+        log("-----------------------------");
     }
 
     private static synchronized void individualBenchmarker(List<String> testFolders, Map<String, List<File>> fileLists, PdfWordSearcher scraper, List<Long> times) throws Exception {
         for (String currFolder : testFolders) {
-            long start = System.currentTimeMillis();
+            long start = System.nanoTime();
             scraper.extractText(fileLists.get(currFolder), word, placeholderModel);
-            long end = System.currentTimeMillis();
+            long end = System.nanoTime();
             times.add(end - start);
         }
     }
@@ -76,23 +65,4 @@ public class Benchmark {
         System.out.println(msg);
     }
 
-    private static List<File> collectPdfFiles(String directoryPath) {
-        System.out.println("Extracting files from directory: " + directoryPath);
-        File directory = new File(directoryPath);
-
-        File[] files = directory.listFiles();
-
-        ArrayList<File> pdfs = new ArrayList<>();
-
-        if (files != null) {
-            for ( File file : files ) {
-                if (file.isDirectory()) {
-                    pdfs.addAll(collectPdfFiles(file.getAbsolutePath()));
-                } else if (file.isFile() && file.getName().endsWith(".pdf")) {
-                    pdfs.add(file);
-                }
-            }
-        }
-        return pdfs;
-    }
 }

@@ -1,5 +1,6 @@
 package pcd.ass_single.part1;
 
+import pcd.ass_single.part1.strategies.actors.ActorBasedSearcher;
 import pcd.ass_single.part1.strategies.thread.ThreadPoolSearch;
 
 public class PdfSearchApp {
