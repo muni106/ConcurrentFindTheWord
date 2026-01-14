@@ -20,9 +20,13 @@ public class SearchController {
                     Thread.sleep(1000);
                     switch (event.eventType()) {
                         case START -> {
+                            // TODO try to remove these and see if it works
+                            model.setCountFiles(0);
+                            model.setCountPdfFiles(0);
                             model.startFromScratch(event.directoryPath(), event.searchWord());
                         }
                         case STOP -> {
+
                         }
                         case SUSPEND -> {
                         }

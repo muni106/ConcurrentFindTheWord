@@ -4,7 +4,6 @@ import pcd.ass_single.part1.SearchModel;
 import pcd.ass_single.part1.strategies.BasicSearch;
 import pcd.ass_single.part1.strategies.PdfWordSearcher;
 import pcd.ass_single.part1.strategies.reactive_prog.RxJavaSearcher;
-import pcd.ass_single.part1.strategies.thread.ThreadPoolSearch;
 
 import java.io.File;
 import java.util.*;

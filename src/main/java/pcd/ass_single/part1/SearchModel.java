@@ -25,9 +25,9 @@ public class SearchModel {
     }
 
     public void startFromScratch(String directoryPath, String searchWord) {
-        countFiles = 0;
-        countPdfFiles = 0;
-        countPdfFilesWithWord = 0;
+        this.countFiles = 0;
+        this.countPdfFiles = 0;
+        this.countPdfFilesWithWord = 0;
         notifyObservers();
         pdfs = collectPdfFiles(directoryPath);
         scrapePdfsWithWord(searchWord);
@@ -102,6 +102,13 @@ public class SearchModel {
         notifyObservers();
     }
 
+    public void setCountFiles(int countFiles) {
+        this.countFiles = countFiles;
+    }
+
+    public void setCountPdfFiles(int countPdfFiles) {
+        this.countPdfFiles = countPdfFiles;
+    }
 
     private void notifyObservers() {
         for (ModelObserver obs: observers) {

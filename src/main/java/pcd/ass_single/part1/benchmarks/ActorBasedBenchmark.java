@@ -46,7 +46,7 @@ public class ActorBasedBenchmark {
         warmup(testFolders, fileLists, akkaActorsSearcher);
         individualBenchmarker(testFolders, fileLists, akkaActorsSearcher, akkaActorsTimes);
 
-        log("THREADS-based approach benchmark:");
+        log("ACTOR-based approach benchmark:");
         for (int i = 0; i < singleThreadedTimes.size(); i++) {
             double singleThreadMs = singleThreadedTimes.get(i) / 1_000_000.0;
             double akkaActorsMs = akkaActorsTimes.get(i) / 1_000_000.0;

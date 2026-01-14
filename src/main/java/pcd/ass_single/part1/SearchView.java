@@ -33,18 +33,18 @@ public class SearchView extends JFrame implements ActionListener, ModelObserver 
         searchWordField.setToolTipText("Enter word to search");
 
         // Start button
-        JButton startButton = new JButton("Start Extraction");
+        JButton startButton = new JButton("Start");
         startButton.addActionListener(e -> handleExtraction(ExtractionEventType.START));
 
-//        JButton startButton = new JButton("Start Extraction");
-//        startButton.addActionListener(e -> handleExtraction(ExtractionEventType.START));
-//
-//        JButton startButton = new JButton("Start Extraction");
-//        startButton.addActionListener(e -> handleExtraction(ExtractionEventType.START));
-//
-//
-//        JButton startButton = new JButton("Start Extraction");
-//        startButton.addActionListener(e -> handleExtraction(ExtractionEventType.START));
+        JButton stopButton = new JButton("Stop");
+        startButton.addActionListener(e -> handleExtraction(ExtractionEventType.STOP));
+
+        JButton resumeButton = new JButton("Resume");
+        startButton.addActionListener(e -> handleExtraction(ExtractionEventType.RESUME));
+
+
+        JButton suspendButton = new JButton("Suspend");
+        startButton.addActionListener(e -> handleExtraction(ExtractionEventType.SUSPEND));
 
         countFiles = new JTextField(20);
         countFiles.setEditable(false);
@@ -56,7 +56,12 @@ public class SearchView extends JFrame implements ActionListener, ModelObserver 
         JPanel inputPanel = new JPanel();
         inputPanel.add(directoryPathField);
         inputPanel.add(searchWordField);
-        inputPanel.add(startButton);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(startButton);
+        buttonPanel.add(stopButton);
+        buttonPanel.add(resumeButton);
+        buttonPanel.add(suspendButton);
 
 
         JPanel resultPanel = new JPanel();
@@ -66,7 +71,8 @@ public class SearchView extends JFrame implements ActionListener, ModelObserver 
 
         setLayout(new BorderLayout());
         add(inputPanel, BorderLayout.NORTH);
-        add(resultPanel, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.CENTER);
+        add(resultPanel, BorderLayout.SOUTH);
 
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent ev) {
