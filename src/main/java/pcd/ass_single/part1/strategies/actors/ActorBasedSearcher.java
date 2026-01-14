@@ -18,7 +18,7 @@ public class ActorBasedSearcher implements PdfWordSearcher {
         public Receive createReceive() {
             return receiveBuilder()
                     .match(Integer.class, count -> {
-                        log("Number of pdfs with that word: " + count );
+//                        log("Number of pdfs with that word: " + count );
                         getContext().getSystem().terminate();
                     })
                     .build();

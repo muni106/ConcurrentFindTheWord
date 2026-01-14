@@ -47,8 +47,8 @@ class PdfSearchVerticle extends AbstractVerticle {
             return sum;
         }).onSuccess(result -> {
             long finishTime = System.currentTimeMillis();
-            System.out.println("Total sum is: " + result);
-            System.out.println("Total time ms: " + (finishTime - startTime));
+//            System.out.println("Total sum is: " + result);
+//            System.out.println("Total time ms: " + (finishTime - startTime));
         });
     }
 

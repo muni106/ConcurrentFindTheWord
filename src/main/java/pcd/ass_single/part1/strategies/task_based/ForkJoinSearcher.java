@@ -22,7 +22,7 @@ public class ForkJoinSearcher implements PdfWordSearcher {
             DirectoryTree dir = DirectoryTree.fromDirectory(files.getFirst().getParentFile());
             FileCounter fc = new FileCounter(model);
             count = fc.countFilesInParallel(dir, word);
-            System.out.println("The number of files with the word " + word + " is: " + count);
+//            System.out.println("The number of files with the word " + word + " is: " + count);
         }else {
             System.err.println("No files found");
         }

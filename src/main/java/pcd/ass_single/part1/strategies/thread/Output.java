@@ -11,7 +11,6 @@ public class Output  extends Thread {
 
     public void run(){
         int value = cell.get();
-        long time = System.currentTimeMillis() - startTime;
-        System.out.println("time: " + time);
+//        long time = System.currentTimeMillis() - startTime;
     }
 }

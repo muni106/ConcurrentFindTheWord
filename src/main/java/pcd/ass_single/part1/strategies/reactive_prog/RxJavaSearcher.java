@@ -50,8 +50,8 @@ public class RxJavaSearcher implements PdfWordSearcher {
                     .observeOn(Schedulers.computation())
                     .blockingSubscribe(res -> log("total items: " + res), err -> log("error"));
         } finally {
-            long time = System.currentTimeMillis() - startTime;
-            log("computation time: " + time);
+//            long time = System.currentTimeMillis() - startTime;
+//            log("computation time: " + time);
             Schedulers.shutdown();
         }
     }

@@ -50,25 +50,26 @@ public class Benchmark {
 
         final Integer numExecutions = 7;
 
+        individualBenchmarker(testFolders, fileLists, singleThreadedSearcher, singleThreadedTimes);
         individualBenchmarker(testFolders, fileLists, threadPoolSearcher, threadPoolTimes);
+
+        for (int i = 0; i < singleThreadedTimes.size(); i++) {
+            log(testFolders.get(i));
+            log("speedup = " + (singleThreadedTimes.get(i) / threadPoolTimes.get(i)));
+        }
+
+
 
 
     }
 
-    private static void individualBenchmarker(List<String> testFolders, Map<String, List<File>> fileLists, PdfWordSearcher scraper, List<Long> times) throws Exception {
-
+    private static synchronized void individualBenchmarker(List<String> testFolders, Map<String, List<File>> fileLists, PdfWordSearcher scraper, List<Long> times) throws Exception {
         for (String currFolder : testFolders) {
-            long sum = 0;
-            for (int i = 0; i < 7; i++) {
-                long start = System.currentTimeMillis();
-                scraper.extractText(fileLists.get(currFolder), word, placeholderModel);
-                long end = System.currentTimeMillis();
-                sum += end - start;
-
-            }
-            times.add(sum / 7);
+            long start = System.currentTimeMillis();
+            scraper.extractText(fileLists.get(currFolder), word, placeholderModel);
+            long end = System.currentTimeMillis();
+            times.add(end - start);
         }
-
     }
 
     private static void log(String msg) {
