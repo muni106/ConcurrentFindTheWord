@@ -3,11 +3,7 @@ package pcd.ass_single.part1.benchmarks;
 import pcd.ass_single.part1.SearchModel;
 import pcd.ass_single.part1.strategies.BasicSearch;
 import pcd.ass_single.part1.strategies.PdfWordSearcher;
-import pcd.ass_single.part1.strategies.async_event.VertxAsyncSearcher;
-import pcd.ass_single.part1.strategies.reactive_prog.RxJavaSearcher;
-import pcd.ass_single.part1.strategies.task_based.ForkJoinSearcher;
 import pcd.ass_single.part1.strategies.thread.ThreadPoolSearch;
-import pcd.ass_single.part1.strategies.virtual_threads.VirtualThreadSearcher;
 
 import java.io.File;
 import java.util.*;
@@ -43,27 +39,29 @@ public class ThreadPoolBenchmark {
 
 
 
+        warmup(testFolders, fileLists, singleThreadedSearcher);
         individualBenchmarker(testFolders, fileLists, singleThreadedSearcher, singleThreadedTimes);
+
+        warmup(testFolders, fileLists, threadPoolSearcher);
         individualBenchmarker(testFolders, fileLists, threadPoolSearcher, threadPoolTimes);
 
         log("THREADS-based approach benchmark:");
         for (int i = 0; i < singleThreadedTimes.size(); i++) {
-            double baselineMs = singleThreadedTimes.get(i) / 1_000_000.0;
-            double parallelMs = threadPoolTimes.get(i) / 1_000_000.0;
+            double singleThreadMs = singleThreadedTimes.get(i) / 1_000_000.0;
+            double threadPoolMs = threadPoolTimes.get(i) / 1_000_000.0;
             double speedup = (double)singleThreadedTimes.get(i) / threadPoolTimes.get(i);
 
             log(testFolders.get(i));
-            log(String.format("  Sequential:  %8.2f ms", baselineMs));
-            log(String.format("  Thread Pool: %8.2f ms", parallelMs));
-            log(String.format("  Speedup:     %8.2fx", speedup));
-            log("---------------------------------------\n");
+            log(" Avg Sequential time: " + singleThreadMs + " ms");
+            log(" Avg Thread Pool time: " + threadPoolMs + " ms");
+            log(" Speedup: " + speedup);
+            log("---------------------------------------");
         }
-
-        log("-----------------------------");
 
     }
 
     private static void individualBenchmarker(List<String> testFolders, Map<String, List<File>> fileLists, PdfWordSearcher scraper, List<Long> times) throws Exception {
+        log("real");
         for (String currFolder : testFolders) {
             long sum = 0;
             for (int i = 0; i < numExecutions; i++) {
@@ -75,6 +73,16 @@ public class ThreadPoolBenchmark {
             times.add(sum / numExecutions);
         }
 
+    }
+
+    // to reduce java's JIT
+    private static void warmup(List<String> testFolders,  Map<String, List<File>> fileLists, PdfWordSearcher scraper) throws Exception {
+        log("warmup");
+        for (String currFolder : testFolders) {
+            if (fileLists.get(currFolder).size() < 1000) {
+                scraper.extractText(fileLists.get(currFolder), word, placeholderModel);
+            }
+        }
     }
 
 }

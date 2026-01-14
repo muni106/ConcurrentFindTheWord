@@ -3,12 +3,8 @@ package pcd.ass_single.part1.benchmarks;
 import pcd.ass_single.part1.SearchModel;
 import pcd.ass_single.part1.strategies.BasicSearch;
 import pcd.ass_single.part1.strategies.PdfWordSearcher;
-import pcd.ass_single.part1.strategies.actors.ActorBasedSearcher;
-import pcd.ass_single.part1.strategies.async_event.VertxAsyncSearcher;
-import pcd.ass_single.part1.strategies.reactive_prog.RxJavaSearcher;
 import pcd.ass_single.part1.strategies.task_based.ForkJoinSearcher;
 import pcd.ass_single.part1.strategies.thread.ThreadPoolSearch;
-import pcd.ass_single.part1.strategies.virtual_threads.VirtualThreadSearcher;
 
 import java.io.File;
 import java.util.*;
@@ -19,6 +15,8 @@ import static pcd.ass_single.part1.benchmarks.BenchmarkCommon.log;
 public class ForkJoinBenchmark {
     static SearchModel placeholderModel = new SearchModel(new BasicSearch());
     static String word = "goku";
+    static final Integer numExecutions = 7;
+
     public static void main(String[] args) throws Exception {
 
         // SETUP
@@ -37,28 +35,52 @@ public class ForkJoinBenchmark {
 
         for (String folder : testFolders) {
             fileLists.put(folder, collectPdfFiles(folder));
-            fileLists.get(folder).forEach(System.out::println);
+//            fileLists.get(folder).forEach(System.out::println);
         }
 
-
-        final Integer numExecutions = 7;
-
+        warmup(testFolders, fileLists, singleThreadedSearcher);
         individualBenchmarker(testFolders, fileLists, singleThreadedSearcher, singleThreadedTimes);
+
+        warmup(testFolders, fileLists, forkJoinSearcher);
         individualBenchmarker(testFolders, fileLists, forkJoinSearcher, forkJoinTimes);
-        log("FORKJOIN approach benchmark:");
+
+        log("FORKJOIN-based approach benchmark:");
         for (int i = 0; i < singleThreadedTimes.size(); i++) {
+            double singleThreadMs = singleThreadedTimes.get(i) / 1_000_000.0;
+            double forkJoinMs = forkJoinTimes.get(i) / 1_000_000.0;
+            double speedup = (double)singleThreadedTimes.get(i) / forkJoinTimes.get(i);
+
             log(testFolders.get(i));
-            log("speedup = " + (singleThreadedTimes.get(i) / forkJoinTimes.get(i)));
+            log(" Avg Sequential time: " + singleThreadMs + " ms");
+            log(" Avg Thread Pool time: " + forkJoinMs + " ms");
+            log(" Speedup: " + speedup);
+            log("---------------------------------------");
         }
-        log("-----------------------------");
+
     }
 
-    private static synchronized void individualBenchmarker(List<String> testFolders, Map<String, List<File>> fileLists, PdfWordSearcher scraper, List<Long> times) throws Exception {
+    private static void individualBenchmarker(List<String> testFolders, Map<String, List<File>> fileLists, PdfWordSearcher scraper, List<Long> times) throws Exception {
+        log("real");
         for (String currFolder : testFolders) {
-            long start = System.nanoTime();
-            scraper.extractText(fileLists.get(currFolder), word, placeholderModel);
-            long end = System.nanoTime();
-            times.add(end - start);
+            long sum = 0;
+            for (int i = 0; i < numExecutions; i++) {
+                long start = System.nanoTime();
+                scraper.extractText(fileLists.get(currFolder), word, placeholderModel);
+                long end = System.nanoTime();
+                sum += end - start;
+            }
+            times.add(sum / numExecutions);
+        }
+
+    }
+
+    // to reduce java's JIT
+    private static void warmup(List<String> testFolders,  Map<String, List<File>> fileLists, PdfWordSearcher scraper) throws Exception {
+        log("warmup");
+        for (String currFolder : testFolders) {
+            if (fileLists.get(currFolder).size() < 1000) {
+                scraper.extractText(fileLists.get(currFolder), word, placeholderModel);
+            }
         }
     }
 

@@ -52,7 +52,7 @@ public class RxJavaSearcher implements PdfWordSearcher {
         } finally {
 //            long time = System.currentTimeMillis() - startTime;
 //            log("computation time: " + time);
-            Schedulers.shutdown();
+//            Schedulers.shutdown();
         }
     }
 
