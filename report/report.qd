@@ -19,8 +19,8 @@
 
 .tableofcontents maxdepth:{2} 
 
-# Problem analisys
-The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a GUI.
+# Problem analysis
+The problem presents a computational task that is inherently parallelizable due to the independent nature of processing individual pdf files. The core challenge involves recursively traversing a directory structure, identifying pdf files, extracting text content, and searching for a specific word while maintaining accurate counts and providing real-time progress updates through a gui.
 
 ## Decomposition strategy
 The problem can be decomposed along two primary dimensions: task decomposition and data decomposition.
@@ -41,11 +41,11 @@ results of analyzing another, making them ideal candidates for parallel processi
 ## Coordination and synchronization challenges
 Despite the high degree of independence, several coordination
 points require careful synchronization.
-The shared counters (total files analyzed, PDFs found,
-PDFs containing the target word) represent critical sections
+The shared counters (total files analyzed, pdfs found,
+pdfs containing the target word) represent critical sections
 that must be protected against race conditions when multiple threads
 update them concurrently.
-Additionally, the GUI updates must be coordinated to ensure
+Additionally, the gui updates must be coordinated to ensure
 consistent and accurate display of progress without overwhelming
 the event dispatch thread.
 The start, stop, suspend, resume controls introduce additional
@@ -54,7 +54,7 @@ cooperatively while maintaining system state consistency.
 
 
 # Solution strategy and architecture
-## High-level architecture
+## Highlevel architecture
 The project adopts a modular architecture that combines the Model-View-Controller 
 pattern with the Strategy pattern to accommodate six distinct concurrency approaches while
 maintaining code reusability and separation of concerns.
@@ -103,11 +103,11 @@ maintaining code reusability and separation of concerns.
 ### Core architecture components
 The application's structure consists of three primary MVC
 components that remain consistent across all concurrency implementations:
-- **SearchModel**: Encapsulates the application state, including counters for analyzed files, PDF files found, and matches containing the target word. This model serves as the single source of truth and notifies observers of state changes
+- **SearchModel**: Encapsulates the application state, including counters for analyzed files, pdf files found, and matches containing the target word. This model serves as the single source of truth and notifies observers of state changes
 - **SearchView**: Provides the graphical user interface with input fields for directory path and search word, control buttons (start/stop/suspend/resume), and output boxes displaying real-time progress
 - **SearchController**: Mediates between the view and model, handling user interactions and delegating work to the appropriate concurrency strategy implementation
 
-The ModelObserver interface implements the Observer pattern, enabling the view to react to model state changes without tight coupling, ensuring that GUI updates remain synchronized with the underlying computational progress.
+The ModelObserver interface implements the Observer pattern, enabling the view to react to model state changes without tight coupling, ensuring that gui updates remain synchronized with the underlying computational progress.
 
 ### Strategy pattern
 The core of this architecture lies in the strategies package,
@@ -134,7 +134,7 @@ regardless of their internal implementation details.
 ### Supporting infrastructure
 The project structure includes dedicated components for testing and validation:
 
-- generator: Contains scripts and sample PDFs for creating test datasets with varying file counts and directory depths
+- generator: Contains scripts and sample pdfs for creating test datasets with varying file counts and directory depths
 - pdfs: Houses multiple test scenarios ranging from small sets (3-10 files) to large-scale tests (50,000+ files) with both flat and recursive directory structures
 - jpf-workspace: Provides Java PathFinder integration for formal verification of concurrent properties in the thread based implementation
 
@@ -149,14 +149,14 @@ utilization while maintaining strict control over concurrency mechanisms.
 
 .mermaid 
     flowchart TD
-        Start([PDF Files List])
+        Start([pdf Files List])
         Split{Partition N=CPU+1}
         W1[Worker 1 Chunk 1]
         W2[Worker 2 Chunk 2]
         W3[Worker N Chunk N]
-        P1[Process PDFs Extract Match]
-        P2[Process PDFs Extract Match]
-        P3[Process PDFs Extract Match]
+        P1[Process pdfs Extract Match]
+        P2[Process pdfs Extract Match]
+        P3[Process pdfs Extract Match]
         U1[Update Model: increment pdfsWithWord]
         U2[Update Model: increment pdfsWithWord]
         U3[Update Model: increment pdfsWithWord]
@@ -187,23 +187,20 @@ The solution dynamically determines the optimal number of worker threads based
 on available CPU resources using the formula Nthreads = Ncpu + 1,
 where Ncpu is obtained via `Runtime.getRuntime().availableProcessors()`.
 This approach follows the established heuristic that a system with N processors
-achieves optimal utilization with N+1 threads, accounting for potential I/O blocking during
-PDF file operations.
-When the number of PDF files is smaller than available CPUs,
-the thread count adapts accordingly to avoid unnecessary thread creation overhead.
+achieves optimal utilization with N+1 threads.
 
 ### Work partitioning and distribution
-The ThreadPoolSearch class divides the list of PDF files into equal-sized chunks using a step-based partitioning strategy: step = numFiles / Nthreads.
+The ThreadPoolSearch class divides the list of pdf files into equal-sized chunks using a step-based partitioning strategy: step = numFiles / Nthreads.
 Each Worker thread receives a contiguous range defined by start and end indices, processing files
-independently without inter-worker communication. The final worker handles any remaining files due to integer division, ensuring all PDFs are processed.
+independently without inter-worker communication. The final worker handles any remaining files due to integer division, ensuring all pdfs are processed.
 
-### Monitor-Based Coordination
+### Monitor based Coordination
 
 The custom monitor class implements a synchronization mechanism using ReentrantLock
 and Condition variables from java.util.concurrent.locks, adhering to the assignment
 constraint of using only low-level concurrent utilities for monitor implementation.
 The monitor maintains two critical pieces of state:
-- count: Accumulates the total number of PDFs containing the target word across all workers.
+- count: Accumulates the total number of pdfs containing the target word across all workers.
 - numFiles: Tracks remaining unprocessed files, decremented as workers complete their chunks.
 
 Workers call `updateFoundFiles(analyzedFiles, filesFound)` upon completing their assigned chunk, which atomically updates both counters under mutex protection. When the last worker finishes (numFiles == 0),
@@ -211,7 +208,7 @@ the monitor signals the waiting Output thread via the workersFinished condition 
 
 ### Worker thread implementation
 Each worker thread `extends Thread` and processes its assigned file range by iterating through
-PDF files, extracting text using Apache PDFBox's PDFTextStripper, and performing string matching.
+pdf files, extracting text using Apache pdfBox's pdfTextStripper, and performing string matching.
 The worker immediately updates the shared SearchModel when a match is found via `model.incCountPdfFilesWithWord()`,
 enabling real-time updates.
 After processing all assigned files, the worker reports its results to the monitor,
@@ -283,12 +280,12 @@ providing performance metrics.
 ## Virtual Threads
 
 The virtual thread implementation adopts a virtual thread per file strategy where each
-PDF is processed by its own virtual thread.
+pdf is processed by its own virtual thread.
 
 ### Implementation Structure
 The solution creates a **monitor** to coordinate all virtual threads, initialized with the total number of files to process. A **virtual thread executor** manages the lifecycle of all worker threads automatically through Java's resource management. Additionally, a separate **output thread** is created but held in reserve until all worker threads begin their execution.
 
-The processing logic iterates through the entire list of PDF files and submits each one as an independent task to the executor. For each file, a new virtual thread is spawned with a unique identifier for debugging purposes. Each virtual thread independently loads its assigned PDF, extracts the text content, searches for the target word, and reports whether a match was found to the shared monitor.
+The processing logic iterates through the entire list of pdf files and submits each one as an independent task to the executor. For each file, a new virtual thread is spawned with a unique identifier for debugging purposes. Each virtual thread independently loads its assigned pdf, extracts the text content, searches for the target word, and reports whether a match was found to the shared monitor.
 Once all tasks are submitted, the output thread begins execution and the main program waits for it to complete before returning
 
 ### Monitor synchronization
@@ -297,7 +294,7 @@ The monitor uses explicit lock and condition variable mechanisms rather than tra
 
 During the computation, every time a new file contains the word, the model is updated.
 
-This architecture exploits the lightweight nature of virtual threads to achieve massive parallelism, creating as many virtual threads as there are PDF files, without overwhelming system resources.
+This architecture exploits the lightweight nature of virtual threads to achieve massive parallelism, creating as many virtual threads as there are pdf files, without overwhelming system resources.
 
 .mermaid
     classDiagram
@@ -358,80 +355,83 @@ This architecture exploits the lightweight nature of virtual threads to achieve 
 
 The task-based implementation uses Java's ForkJoin framework to decompose the problem hierarchically, mirroring the recursive structure of the directory tree itself.
 
-### Hierachical task decomposition
-The solution begins by constructing a complete representation of the directory structure before processing begins. The tree representation recursively captures subdirectories and PDF files at each level, creating a hierarchical data structure that mirrors the file system. This upfront construction enables the ForkJoin framework to understand the complete workload structure and optimize task distribution.
+### Hierarchical task decomposition
+The solution begins by constructing a complete representation of the directory structure before processing begins. The tree representation recursively captures subdirectories and pdf files at each level, creating a hierarchical data structure that mirrors the file system. This upfront construction enables the ForkJoin framework to understand the complete workload structure and optimize task distribution.
 
-The tree builder traverses each directory, classifying entries as either subdirectories (which are recursively processed) or PDF files (which are collected as leaf nodes). This separation allows the framework to spawn different task types: directory scanning tasks for structural traversal and word search tasks for actual file processing.
+The tree builder traverses each directory, classifying entries as either subdirectories (which are recursively processed) or pdf files (which are collected as leaf nodes). This separation allows the framework to spawn different task types: directory scanning tasks for structural traversal and word search tasks for actual file processing.
 
 ### ForkJoin execution model
 
 The coordinator creates a ForkJoin pool and submits the root in the directory task, which initiates the recursive decomposition. Each directory scanning task examines its assigned directory node and performs a two phase forking strategy.
 
-In the first phase, the task creates and forks child directory tasks for each subdirectory, enabling parallel exploration of the directory tree. In the second phase, it creates and forks word search tasks for each PDF file in the current directory. All forked tasks are collected in a list for subsequent joining.
+In the first phase, the task creates and forks child directory tasks for each subdirectory, enabling parallel exploration of the directory tree. In the second phase, it creates and forks word search tasks for each pdf file in the current directory. All forked tasks are collected in a list for subsequent joining.
 
 After forking all subtasks, the directory task enters a joining phase where it waits for each child task to complete and accumulates their results. This fork-join pattern creates a recursive decomposition where work is divided (forked) down the tree and results are aggregated (joined) back up.
 
 
 ### Leaf (word search) task process
-Word search tasks represent the atomic units of computation in this approach. Each task receives a single PDF file reference, extracts its text content, searches for the target word, and returns either 1 for a match or 0 for no match. When a match is found, the task immediately updates the shared model to provide constant UI feedback
+Word search tasks represent the atomic units of computation in this approach. Each task receives a single pdf file reference, extracts its text content, searches for the target word, and returns either 1 for a match or 0 for no match. When a match is found, the task immediately updates the shared model to provide constant UI feedback
+
 
 .mermaid
     flowchart TD
-    Start[ForkJoinSearcher] --> Build[Build DirectoryTree<br/>from root directory]
-    Build --> Pool[Create ForkJoinPool]
-    Pool --> RootTask[DirectoryScanTask<br/>Root Directory]
+    Start([Start ForkJoinSearcher]) --> Build[Build DirectoryTree<br/>from root directory]
+    Build --> CreatePool[Create ForkJoinPool]
+    CreatePool --> Submit[Submit Root DirectoryScanTask]
     
-    RootTask --> Fork1{Fork Phase}
+    Submit --> RootCompute[Compute: Root Directory]
+    RootCompute --> RootFork[[Fork: Create Child Tasks]]
     
-    Fork1 --> SubDir1[DirectoryScanTask<br/>Subdirectory 1]
-    Fork1 --> SubDir2[DirectoryScanTask<br/>Subdirectory 2]
-    Fork1 --> PDF1[WordSearchTask<br/>PDF 1]
-    Fork1 --> PDF2[WordSearchTask<br/>PDF 2]
-    Fork1 --> PDF3[WordSearchTask<br/>PDF 3]
+    RootFork -.-> SubDir1Task[DirectoryScanTask<br/>Subdirectory 1]
+    RootFork -.-> SubDir2Task[DirectoryScanTask<br/>Subdirectory 2]
+    RootFork -.-> PDF1Task[WordSearchTask<br/>PDF 1]
+    RootFork -.-> PDF2Task[WordSearchTask<br/>PDF 2]
+    RootFork -.-> PDF3Task[WordSearchTask<br/>PDF 3]
     
-    SubDir1 --> Fork2{Fork Phase}
-    Fork2 --> PDF4[WordSearchTask<br/>PDF 4]
-    Fork2 --> PDF5[WordSearchTask<br/>PDF 5]
+    SubDir1Task --> SubDir1Fork[[Fork: Subdirectory 1]]
+    SubDir1Fork -.-> PDF4Task[WordSearchTask<br/>PDF 4]
+    SubDir1Fork -.-> PDF5Task[WordSearchTask<br/>PDF 5]
     
-    SubDir2 --> Fork3{Fork Phase}
-    Fork3 --> PDF6[WordSearchTask<br/>PDF 6]
-    Fork3 --> PDF7[WordSearchTask<br/>PDF 7]
+    SubDir2Task --> SubDir2Fork[[Fork: Subdirectory 2]]
+    SubDir2Fork -.-> PDF6Task[WordSearchTask<br/>PDF 6]
+    SubDir2Fork -.-> PDF7Task[WordSearchTask<br/>PDF 7]
     
-    PDF1 --> R1[Return 0/1]
-    PDF2 --> R2[Return 0/1]
-    PDF3 --> R3[Return 0/1]
-    PDF4 --> R4[Return 0/1]
-    PDF5 --> R5[Return 0/1]
-    PDF6 --> R6[Return 0/1]
-    PDF7 --> R7[Return 0/1]
+    PDF1Task --> Result1[Compute:<br/>Extract & Search<br/>Return 0/1]
+    PDF2Task --> Result2[Compute:<br/>Extract & Search<br/>Return 0/1]
+    PDF3Task --> Result3[Compute:<br/>Extract & Search<br/>Return 0/1]
+    PDF4Task --> Result4[Compute:<br/>Extract & Search<br/>Return 0/1]
+    PDF5Task --> Result5[Compute:<br/>Extract & Search<br/>Return 0/1]
+    PDF6Task --> Result6[Compute:<br/>Extract & Search<br/>Return 0/1]
+    PDF7Task --> Result7[Compute:<br/>Extract & Search<br/>Return 0/1]
     
-    R4 --> Join2[Join Results]
-    R5 --> Join2
-    Join2 --> SubDir1Result[Sum]
+    Result4 --> Join2[[Join: Subdirectory 1]]
+    Result5 --> Join2
+    Join2 --> Sum2[Sum SubDir1 Results]
     
-    R6 --> Join3[Join Results]
-    R7 --> Join3
-    Join3 --> SubDir2Result[Sum]
+    Result6 --> Join3[[Join: Subdirectory 2]]
+    Result7 --> Join3
+    Join3 --> Sum3[Sum SubDir2 Results]
     
-    R1 --> Join1[Join All Results]
-    R2 --> Join1
-    R3 --> Join1
-    SubDir1Result --> Join1
-    SubDir2Result --> Join1
+    Result1 --> RootJoin[[Join: Root Directory]]
+    Result2 --> RootJoin
+    Result3 --> RootJoin
+    Sum2 --> RootJoin
+    Sum3 --> RootJoin
     
-    Join1 --> Final[Total Count]
+    RootJoin --> Aggregate[Aggregate Total Count]
+    Aggregate --> End([End])
     
 <<<
 ## Async event approach
 The async event implementation uses the Vert.x framework, which provides an event loop architecture for non-blocking asynchronous processing.
 
 ### Verticle based architecture
-The solution creates a custom verticle, which serves as the deployable unit of concurrent execution in Vert.x. The main searcher class configures a Vert.x instance with a worker pool sized to match available CPU cores, then deploys the PDF search verticle onto this runtime.
-The verticle encapsulates the entire search logic within its methods, receiving the list of PDF files, target word, and model reference through its constructor. When the verticle starts, it initiates the asynchronous processing pipeline.
+The solution creates a custom verticle, which serves as the deployable unit of concurrent execution in Vert.x. The main searcher class configures a Vert.x instance with a worker pool sized to match available CPU cores, then deploys the pdf search verticle onto this runtime.
+The verticle encapsulates the entire search logic within its methods, receiving the list of pdf files, target word, and model reference through its constructor. When the verticle starts, it initiates the asynchronous processing pipeline.
 
 ### Event loop and worker pool
 
-For each PDF file, the verticle submits a blocking task that extracts text and searches for the target word. These tasks execute on worker threads from the pool, preventing the event loop from blocking. Each blocking operation immediately returns a Future object representing the eventual completion of that task.
+For each pdf file, the verticle submits a blocking task that extracts text and searches for the target word. These tasks execute on worker threads from the pool, preventing the event loop from blocking. Each blocking operation immediately returns a Future object representing the eventual completion of that task.
 
 ### Future Composition and aggregation
 All individual file processing futures are collected into a list as they are created. The framework then composes these futures using a composite future that completes only when all individual futures have finished.
@@ -442,116 +442,112 @@ The result handling follows a callback based pattern where success handlers are 
 
 .mermaid 
     flowchart TD
-    Start[VertxAsyncSearcher] --> Config[Configure Vert.x<br/>Worker Pool Size = CPU cores]
+    Start([Start VertxAsyncSearcher]) --> Config[Configure Vert.x<br/>Worker Pool Size = CPU cores]
     Config --> Deploy[Deploy PdfSearchVerticle]
+    Deploy --> VerticleStart[Verticle.start invoked]
     
-    Deploy --> EventLoop[Event Loop Thread]
+    VerticleStart --> SubmitFork[[Fork: Submit All Blocking Tasks]]
     
-    EventLoop --> Submit1[Submit Blocking Task<br/>PDF 1]
-    EventLoop --> Submit2[Submit Blocking Task<br/>PDF 2]
-    EventLoop --> Submit3[Submit Blocking Task<br/>PDF N]
+    SubmitFork -.-> Task1[Submit Blocking Task<br/>PDF 1 → Future 1]
+    SubmitFork -.-> Task2[Submit Blocking Task<br/>PDF 2 → Future 2]
+    SubmitFork -.-> TaskN[Submit Blocking Task<br/>PDF N → Future N]
     
-    Submit1 --> Future1[Future 1]
-    Submit2 --> Future2[Future 2]
-    Submit3 --> FutureN[Future N]
+    Task1 --> Worker1[Worker Thread Pool:<br/>Extract & Search PDF 1]
+    Task2 --> Worker2[Worker Thread Pool:<br/>Extract & Search PDF 2]
+    TaskN --> WorkerN[Worker Thread Pool:<br/>Extract & Search PDF N]
     
-    Future1 --> Worker1[Worker Thread 1<br/>Extract & Search PDF 1]
-    Future2 --> Worker2[Worker Thread 2<br/>Extract & Search PDF 2]
-    FutureN --> WorkerN[Worker Thread N<br/>Extract & Search PDF N]
+    Worker1 --> Check1{Match<br/>found?}
+    Worker2 --> Check2{Match<br/>found?}
+    WorkerN --> CheckN{Match<br/>found?}
     
-    Worker1 --> Update1[Update Model<br/>if match found]
-    Worker2 --> Update2[Update Model<br/>if match found]
-    WorkerN --> UpdateN[Update Model<br/>if match found]
+    Check1 -->|Yes| Update1[Update Model]
+    Check1 -->|No| Return1[Return 0]
+    Update1 --> Return1Matched[Return 1]
     
-    Update1 --> Result1[Return 0/1]
-    Update2 --> Result2[Return 0/1]
-    UpdateN --> ResultN[Return 0/1]
+    Check2 -->|Yes| Update2[Update Model]
+    Check2 -->|No| Return2[Return 0]
+    Update2 --> Return2Matched[Return 1]
     
-    Result1 --> Complete1[Future 1 Completes]
-    Result2 --> Complete2[Future 2 Completes]
-    ResultN --> CompleteN[Future N Completes]
+    CheckN -->|Yes| UpdateN[Update Model]
+    CheckN -->|No| ReturnN[Return 0]
+    UpdateN --> ReturnNMatched[Return 1]
     
-    Complete1 --> Composite[Future.all<br/>Composite Future]
-    Complete2 --> Composite
-    CompleteN --> Composite
+    Return1 --> Complete1[Future 1 completes]
+    Return1Matched --> Complete1
+    Return2 --> Complete2[Future 2 completes]
+    Return2Matched --> Complete2
+    ReturnN --> CompleteN[Future N completes]
+    ReturnNMatched --> CompleteN
     
-    Composite --> AllComplete{All Futures<br/>Complete?}
-    AllComplete -->|Yes| Map[Sum all results]
-    Map --> Success[Success Handler<br/>Print total & time]
+    Complete1 --> JoinBar[[Join: Future.all Composite Future]]
+    Complete2 --> JoinBar
+    CompleteN --> JoinBar
     
-    AllComplete -->|No| Wait[Event Loop Waits]
-    Wait -.-> Composite
+    JoinBar --> Map[Map: Sum all results]
+    Map --> Success[Success Handler:<br/>Update final count & print time]
+    Success --> End([End])
+    
+
 
 <<<
 ## Reactive programming approach
-The reactive programming implementation uses RxJava to model PDF processing as a data stream. 
+The reactive programming implementation uses RxJava to model pdf processing as a data stream. 
 
 ### Hot observable stream creation
-The solution creates a hot observable stream by first defining a flowable source that emits processing results. The flowable is constructed using a custom emitter that iterates through all PDF files sequentially, processing each one and emitting integer values: 1 for files containing the target word, 0 otherwise.
+The solution creates a hot observable stream by first defining a flowable source that emits processing results. The flowable is constructed using a custom emitter that iterates through all pdf files sequentially, processing each one and emitting integer values: 1 for files containing the target word, 0 otherwise.
 The emitter handles the complete lifecycle: it processes all files in a loop, emits results as they become available, signals completion when all files are processed, and propagates any errors encountered during execution. A **buffer backpressure strategy** is configured to handle situations where the consumer cannot keep up with emitted items.
 After creating the flowable, it is converted to a hot observable using the publish operator and immediately connected. 
 
 ### flow control 
 The main processing pipeline applies a sequence of reactive operators to transform the stream. First, a backpressure buffer with a capacity of 5,000 items protects against overflow when the producer emits faster than the consumer can process.
-The reduce operator aggregates all emitted values into a single sum, effectively counting total matches across all PDFs. This reduction happens asynchronously as values flow through the stream.
+The reduce operator aggregates all emitted values into a single sum, effectively counting total matches across all pdfs. This reduction happens asynchronously as values flow through the stream.
 The pipeline concludes with a blocking subscription that waits for the final reduced value, executing success and error handlers when the stream completes.
 
 Unlike the final aggregation performed by the reduce operator, the model is updated immediately within the emitter loop whenever a match is found. This update strategy provides real-time UI feedback through incremental model updates while the reduce operator handles final result computation.
 
 .mermaid 
     flowchart TD
-        Start[RxJavaSearcher] --> Create[Create Flowable<br/>with Custom Emitter]
+        Start([Start]) --> Create[Create Flowable<br/>with Custom Emitter]
+        Create --> EmitterLoop{For each PDF<br/>in list}
         
-        Create --> Loop[Iterate PDF Files<br/>in Emitter]
+        EmitterLoop -->|Next PDF| Extract[Extract text from PDF<br/>containsWord]
+        Extract --> Match{Word<br/>found?}
         
-        Loop --> Process1[Process PDF 1<br/>containsWord]
-        Loop --> Process2[Process PDF 2<br/>containsWord]
-        Loop --> ProcessN[Process PDF N<br/>containsWord]
+        Match -->|Yes| UpdateModel[Update Model<br/>incCountPdfFilesWithWord]
+        Match -->|No| EmitZero[Emit 0]
+        UpdateModel --> EmitOne[Emit 1]
         
-        Process1 --> Check1{Match Found?}
-        Process2 --> Check2{Match Found?}
-        ProcessN --> CheckN{Match Found?}
+        EmitOne --> MoreFiles{More<br/>PDFs?}
+        EmitZero --> MoreFiles
+        MoreFiles -->|Yes| EmitterLoop
+        MoreFiles -->|No| Complete[Signal Complete]
         
-        Check1 -->|Yes| Update1[Update Model]
-        Check2 -->|Yes| Update2[Update Model]
-        CheckN -->|Yes| UpdateN[Update Model]
-        
-        Check1 -->|Always| Emit1[Emit 1 or 0]
-        Check2 -->|Always| Emit2[Emit 1 or 0]
-        CheckN -->|Always| EmitN[Emit 1 or 0]
-        
-        Update1 --> Emit1
-        Update2 --> Emit2
-        UpdateN --> EmitN
-        
-        Emit1 --> Hot[publish + connect<br/>Hot Observable]
-        Emit2 --> Hot
-        EmitN --> Hot
-        
-        Hot --> Buffer[onBackpressureBuffer<br/>capacity: 5000]
-        Buffer --> Reduce[reduce<br/>sum all values]
+        Complete --> Publish[publish + connect<br/>Hot Observable]
+        Publish --> Buffer[onBackpressureBuffer<br/>capacity: 5000]
+        Buffer --> Reduce[reduce<br/>sum all emitted values]
         Reduce --> Schedule[observeOn<br/>Schedulers.computation]
-        Schedule --> Subscribe[blockingSubscribe<br/>wait for result]
-        Subscribe --> Final[Print Total Count<br/>+ Time]
+        Schedule --> Subscribe[blockingSubscribe<br/>wait for final result]
+        Subscribe --> Print[Print total count + time]
+        Print --> End([End])
 
 <<<
 ## Actor approach 
-The actor based implementation uses the Akka framework to model PDF processing as independent actors communicating through asynchronous message passing.
+The actor based implementation uses the Akka framework to model pdf processing as independent actors communicating through asynchronous message passing.
 
 ### Actors
-The solution creates an Akka actor system named `PdfCounter` that serves as the runtime environment for all actors. Two actor types are instantiated: a single analyzer actor that processes all PDF files and maintains the match count, and a requester actor that retrieves the final result and terminates the system.
+The solution creates an Akka actor system named `PdfCounter` that serves as the runtime environment for all actors. Two actor types are instantiated: a single analyzer actor that processes all pdf files and maintains the match count, and a requester actor that retrieves the final result and terminates the system.
 
 The analyzer actor is created first and receives its reference, which serves as its mailbox address for incoming messages. After all processing messages are sent, the requester actor is created and sent a query message to retrieve the accumulated count.
 
 ### Messages
-The implementation defines two message types as immutable data classes. The processing message encapsulates a PDF file reference, the search word, and the model to update, bundling all necessary information for a single file analysis task. The query message is a simple marker class that signals the actor should respond with its current count.
+The implementation defines two message types as immutable data classes. The processing message encapsulates a pdf file reference, the search word, and the model to update, bundling all necessary information for a single file analysis task. The query message is a simple marker class that signals the actor should respond with its current count.
 
 Messages are sent using the tell method, which provides asynchronous delivery without blocking the sender. For processing messages, no sender reference is provided since no response is expected. For the query message, the requester actor's reference is provided so the analyzer knows where to send the final count.
 
 
 
 ### Actor behavior
-The analyzer actor defines its behavior through a receive builder that pattern-matches incoming messages. When it receives a processing message, it executes the PDF text extraction, searches for the word, increments its internal count if a match is found, and updates the model.
+The analyzer actor defines its behavior through a receive builder that pattern-matches incoming messages. When it receives a processing message, it executes the pdf text extraction, searches for the word, increments its internal count if a match is found, and updates the model.
 When it receives a query message, it responds by sending its accumulated count back to the sender using the sender reference automatically captured from the incoming message context. 
 
 
@@ -560,7 +556,7 @@ When it receives a query message, it responds by sending its accumulated count b
     Start([Start]) --> CreateSystem[Create ActorSystem<br/>PdfCounter]
     CreateSystem --> CreateAnalyzer[Create PdfAnalyzerActor]
     
-    CreateAnalyzer --> SendLoop{More PDFs?}
+    CreateAnalyzer --> SendLoop{More pdfs?}
     SendLoop -->|Yes| SendMsg[Send PdfWordMessage<br/>to Analyzer]
     SendMsg --> SendLoop
     SendLoop -->|No| CreateReq[Create RequesterActor]
@@ -571,7 +567,7 @@ When it receives a query message, it responds by sending its accumulated count b
     
     subgraph AnalyzerProcess[PdfAnalyzerActor Processing]
         ReceiveMsg{Receive<br/>Message}
-        ReceiveMsg -->|PdfWordMessage| Load[Load PDF &<br/>Extract Text]
+        ReceiveMsg -->|PdfWordMessage| Load[Load pdf &<br/>Extract Text]
         Load --> Search{Contains<br/>Word?}
         Search -->|Yes| IncCount[Increment Count]
         Search -->|No| Skip[Skip]
@@ -593,26 +589,50 @@ When it receives a query message, it responds by sending its accumulated count b
     
     Terminate --> End([End])
     
-# Performance
+# Performance and correctness
+## Benchmark methodology
+The benchmarks evaluate the six different strategies for pdf word search using a consistent testing framework. Each benchmark follows this protocol:
+
+### Setup
+- Warmup: before the execution on directories with less than 1000 files to minimize JIT compilation effects
+- Iterations: 7 executions per test to calculate average performance (time)
+- Baseline: sequential single threaded approach for speedup calculation
+- Hardware: benchmarks were run in MacBook M3 pro (12 cores)
+
+### Testing folders
+- Small: 3 with word out of 10 pdfs
+- Medium: 50 with word out of 100 pdfs(flat and recursive)
+- Medium: 0 with word out of 1000 pdfs
+- Large: 1001 with word out of 10000 pdfs (flat and recurisive)
+- Largest: 10000 with word out of 50000 pdfs
+
+## Results
+
+ Strategy             | Average Speedup | Performance Category   |
+| -------------------- | --------------- | ---------------------- |
+| ForkJoin             | 5.50           | Best |
+| Virtual Threads      | 3.18           | Strong                 |
+| Thread Pool          | 2.98           | Good                   |
+| Reactive (RxJava)    | 1.23           | Minimal improvement    |
+| Async Event (Vert.x) | 1.08           | No benefits           |
+| Actor (Akka)         | 0.83           | Slower than sequential |
 
 
+### Findings
+- **ForkJoin**: delivered the best performance (5.50 average speedup) with exceptional results on recursive directory structures, achieving 22.71 speedup on one large recursive directory test, probably because the discovery strategy was different and more efficient from all the other approaches.
+-  **Virtual Threads**: excelled on small datasets (6.33 speedup on 3-10 files) due to low thread creation overhead, but performance degraded on larger datasets (1.91-2.71)
+
+- **Thread Pool**: provided stable, predictable performance (2.5-3.7) across all dataset sizes, making it reliable for production use.
+
+- **Reactive, Async Event, Actor**: performed poorly probably due to high framework initialization overhead that overwhelmed the actual work. The Actor model was actually slower than sequential execution on small datasets.
 
 
+## Model Checking
+To verify the correctness of the concurrent implementations, model checking was applied to the Thread Pool strategy using Java PathFinder.
 
+To use java PathFinder was used the lightweight environment provided, which includes a preconfigured JPF installation for JDK 8.
+The ThreadPool strategy was compiled with JPF's custom classpath and executed with Precise race detector listener to check for data races.
 
-
-
-
-
-<!-- # Performance 
-
-# Correctness
-
-about the Thread based strategy, considering these are my notes:
-- In the thread based approach I divided the chunks of pdfs based on the number of available physical CPUs in the moment so I created Threads based on that number:
-`int Nthreads = Ncpu + 1;`
-
-Then I implemented monitor with workers => one worker named Output waiting for the others to return the result
- -->
-
-
+### Results
+The verification completed successfully with no race conditions, deadlocks, or synchronization errors detected in the ThreadPool strategy. This confirms that the Monitor based synchronization pattern and worker thread coordination are correctly implemented, ensuring thread safe updates to shared state (file counts, pdf matches) across all possible execution scenarios.
+Model checking provided formal verification that the concurrent design is correct, complementing the performance benchmarks by ensuring reliability alongside efficiency.
