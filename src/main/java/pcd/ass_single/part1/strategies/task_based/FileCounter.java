@@ -38,7 +38,6 @@ public class FileCounter {
 
     public Integer countFilesInParallel(DirectoryTree dir, String searchedWord) throws IOException {
         try {
-
             return forkJoinPool.invoke(new DirectoryScanTask(this, dir, searchedWord, model));
         } finally {
             forkJoinPool.shutdown();

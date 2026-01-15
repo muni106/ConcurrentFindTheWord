@@ -1,6 +1,5 @@
 package pcd.ass_single.part1;
 
-import pcd.ass_single.part1.strategies.BasicSearch;
 import pcd.ass_single.part1.strategies.PdfWordSearcher;
 
 import java.io.File;
@@ -9,12 +8,17 @@ import java.util.List;
 
 public class SearchModel {
 
-    private List<ModelObserver> observers;
+    private final List<ModelObserver> observers;
     private volatile int countFiles;
     private volatile int countPdfFiles;
     private volatile int countPdfFilesWithWord;
     private List<File> pdfs;
     private final PdfWordSearcher searcher;
+
+    // control state
+    private volatile boolean stopped = false;
+    private volatile boolean suspended = false;
+    private final Object suspendLock = new Object();
 
     public SearchModel(PdfWordSearcher searcher){
         this.searcher = searcher;
@@ -25,15 +29,17 @@ public class SearchModel {
     }
 
     public void startFromScratch(String directoryPath, String searchWord) {
-        this.countFiles = 0;
-        this.countPdfFiles = 0;
-        this.countPdfFilesWithWord = 0;
+        stopped = false;
+        suspended = false;
+        countFiles = 0;
+        countPdfFiles = 0;
+        countPdfFilesWithWord = 0;
         notifyObservers();
         pdfs = collectPdfFiles(directoryPath);
-        scrapePdfsWithWord(searchWord);
+        searchPdfsWithWord(searchWord);
     }
 
-    private void scrapePdfsWithWord(String searchedWord) {
+    private void searchPdfsWithWord(String searchedWord) {
         try {
             searcher.extractText(pdfs, searchedWord, this);
         } catch ( Exception e ) {
@@ -108,6 +114,34 @@ public class SearchModel {
 
     public void setCountPdfFiles(int countPdfFiles) {
         this.countPdfFiles = countPdfFiles;
+    }
+
+    public void stop() {
+        stopped = true;
+        resume();
+    }
+
+    public void suspend() {
+        suspended = true;
+    }
+
+    public void resume() {
+        synchronized (suspendLock) {
+            suspended = false;
+            suspendLock.notifyAll();
+        }
+    }
+
+    // Workers call this to check state
+    public void checkState() throws InterruptedException {
+        if (stopped) {
+            throw new InterruptedException("Search stopped");
+        }
+        synchronized (suspendLock) {
+            while (suspended && !stopped) {
+                suspendLock.wait();
+            }
+        }
     }
 
     private void notifyObservers() {

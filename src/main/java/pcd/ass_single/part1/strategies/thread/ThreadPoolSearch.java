@@ -47,7 +47,7 @@ public class ThreadPoolSearch implements PdfWordSearcher {
             try {
                 output.join();
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                System.out.println("STOP general");
             }
         }else {
             System.err.println("No files found");

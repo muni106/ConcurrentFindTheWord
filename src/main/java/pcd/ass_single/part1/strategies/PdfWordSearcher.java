@@ -7,12 +7,4 @@ import java.util.List;
 
 public interface PdfWordSearcher {
     void extractText(List<File> pdfs, String word, SearchModel model) throws Exception;
-
-    // lifecycle
-    void stop();
-    void suspend();
-    void resume();
-    boolean isRunning();
-    boolean isSuspended();
-
 }

@@ -14,30 +14,31 @@ public class SearchController {
 
     public void processEvent(ExtractionEvent event) {
         try {
-            new Thread(() -> {
                 try {
                     log("[Controller] processing the event: " + event);
                     Thread.sleep(1000);
                     switch (event.eventType()) {
                         case START -> {
+                            model.stop();
                             // TODO try to remove these and see if it works
-                            model.setCountFiles(0);
-                            model.setCountPdfFiles(0);
-                            model.startFromScratch(event.directoryPath(), event.searchWord());
+                            new Thread(() -> {
+                                model.startFromScratch((event.directoryPath()), event.searchWord());
+                            }).start();
                         }
                         case STOP -> {
-
+                            model.stop();
                         }
                         case SUSPEND -> {
+                            model.suspend();
                         }
                         case RESUME -> {
+                            model.resume();
                         }
                     }
                     log("[Controller] event processing done");
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-            }).start();
         } catch (Exception e) {
             e.printStackTrace();
         }

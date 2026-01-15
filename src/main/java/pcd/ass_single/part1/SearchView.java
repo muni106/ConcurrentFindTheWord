@@ -33,18 +33,18 @@ public class SearchView extends JFrame implements ActionListener, ModelObserver 
         searchWordField.setToolTipText("Enter word to search");
 
         // Start button
+
         JButton startButton = new JButton("Start");
         startButton.addActionListener(e -> handleExtraction(ExtractionEventType.START));
 
         JButton stopButton = new JButton("Stop");
-        startButton.addActionListener(e -> handleExtraction(ExtractionEventType.STOP));
+        stopButton.addActionListener(e -> handleExtraction(ExtractionEventType.STOP));
 
         JButton resumeButton = new JButton("Resume");
-        startButton.addActionListener(e -> handleExtraction(ExtractionEventType.RESUME));
-
+        resumeButton.addActionListener(e -> handleExtraction(ExtractionEventType.RESUME));
 
         JButton suspendButton = new JButton("Suspend");
-        startButton.addActionListener(e -> handleExtraction(ExtractionEventType.SUSPEND));
+        suspendButton.addActionListener(e -> handleExtraction(ExtractionEventType.SUSPEND));
 
         countFiles = new JTextField(20);
         countFiles.setEditable(false);

@@ -31,11 +31,15 @@ public class Worker extends Thread {
         int count = 0;
         for (int i = start; i < end; ++i) {
                 try {
+                    model.checkState();
                     if (containsWord(files.get(i), searchedWord)) {
                         count += 1;
                         model.incCountPdfFilesWithWord();
                     }
-                } catch (IOException e) {
+                } catch (InterruptedException e) {
+                    System.out.println("STOP");
+                    break;
+                }catch (IOException e) {
                     throw new RuntimeException(e);
                 }
         }
