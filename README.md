@@ -1,70 +1,159 @@
-PCD a.y. 2024-2025 - ISI LM UNIBO - Cesena Campus
+# ConcurrentFindTheWord 
+A comprehensive comparison of 6 different concurrency approaches in Java for searching words across thousands of PDF files. This project demonstrates practical implementations of threads, virtual threads, ForkJoin, reactive streams, async event loops, and actors.
 
-# Single Assignment 
+## Overview
+This project explores how different concurrency paradigms handle the computationally intensive task of:
+- Recursively traversing directory structures
+- Extracting text from PDF files
+- Searching for specific words
+- Aggregating results with real-time GUI updates
 
-v1.0.0-20250606
+Each implementation uses the Strategy Pattern to provide interchangeable concurrency approaches while maintaining a consistent MVC architecture.
+
+## Architecture
+```txt
+MVC Pattern + Strategy Pattern
+├── SearchView (GUI with start/stop/suspend/resume controls)
+├── SearchController (delegates to strategies)
+├── SearchModel (shared state with thread-safe counters)
+└── Strategies (6 interchangeable implementations)
+    ├── Thread Pool (custom monitors + worker threads)
+    ├── Virtual Threads (Java 21+ lightweight threads)
+    ├── ForkJoin (recursive task decomposition)
+    ├── Reactive (RxJava streams)
+    ├── Async Event (Vert.x event loops)
+    └── Actors (Akka message-passing)
+```
+
+## Concurrency strategies
+
+### 1. Thread Pool
+
+- Custom monitor-based synchronization using `ReentrantLock`
+- Dynamic thread pool sizing: `N = CPU cores + 1`
+- Work partitioning: divides PDFs into equal chunks per thread
+- **Best for:** Stable, predictable production workloads
 
 
-L’assignment unico è articolato in due parti:
-- Prima Parte - Programmazione concorrente
-- Seconda Parte - Programmazione distribuita
+### 2. Virtual Threads
 
-### PRIMA PARTE - programmazione concorrente
-
-- Realizzare un programma concorrente che, dato l'indirizzo di una directory D e una parola P,    fornisca il numero di file PDF presenti in D (o in una qualsiasi sottodirectory, ricorsivamente)  che contengono P. D e P sono parametri del programma, passati da linea di comando. Il programma non necessita di una GUI.
-
-  Per l’elaborazione di file PDF nel repo del corso si usa la libreria PDFBox, con semplice esempio di utilizzo (``pcd.ass_single.part1.example.ExtractTextSimple``) in cui dato un documento PDF caricato da file se ne ottiene il testo corrispondente (come stringa).
-
-- Estendere il programma al punto precedente includendo una GUI con:
-  - Input box per specificare i parametri  
-  - pulsanti start/stop/suspend/resume per avviare/fermare/sospendere/riprendere l'elaborazione
-  - output box dove sia visualizzato man mano il numero di file analizzati (in totale) fino a quel momento, il numero di file PDF trovati e il numero di file PDF contenenti la parola P. 
+- One virtual thread per PDF file
+- Exploits lightweight thread creation (Java 21+)
+- Monitor coordination prevents pinning to carrier threads
+- **Best for:** High file counts with small PDFs
 
 
-Si chiede di sviluppare i due punti considerando in ordine sei approcci distinti, visti nel corso:
+### 3. ForkJoin Framework
 
-- **Soluzione basata su approccio a thread**
-  - La soluzione in questo caso deve basarsi unicamente su un approccio basato su programmazione multithreaded, adottando, da un lato, principi e metodi di progettazione utili per favorire modularità, incapsulamento e proprietà relative, dall’altro una soluzione che massimizzi le performance e reattività. 
-  - Come meccanismi di coordinazione prediligere la definizione e uso di monitor  rispetto ad altre soluzioni di più basso livello.
-  - Non è consentito l’uso di librerie e classi esterne relative alla gestione degli aspetti di concorrenza: in particolare, relativamente alla libreria java.util.concurrent, è possibile utilizzare (eventualmente) solo le classi utili all’implementazione di monitor. 
-- **Soluzione basata su approccio a virtual threads** 
-  - La soluzione in questo caso deve sfruttare i virtual thread (in Java)
-- **Soluzione basata su approccio a task**    
-  - La soluzione in questo caso deve sfruttare un approccio a task, usando come framework di riferimento, gli Executor in Java. 
-- **Soluzione basata su programmazione asincrona ad eventi**
-  - La soluzione in questo caso deve basarsi su programmazione asincrona ad eventi, basata su architettura di controllo ad event loop, usando un qualsiasi framework a supporto che implementi l'approccio.  Esempio di riferimento visto nel corso: Vert.x, in Java o nel linguaggio che si preferisce. E' possibile usare framework alternativi (es. Node.js in Javascript).  
-- **Soluzione basata su programmazione reattiva**
-  - La soluzione in questo caso deve basarsi sulla programmazione reattiva, sfruttando il framework Rx (RxJava se si usa Java come linguaggio di riferimento, non obbligatorio). 
-- **Soluzione basata su attori** 
-  - La soluzione in questo caso deve basarsi unicamente su un approccio ad attori, usando il framework Akka
+- Hierarchical task decomposition mirroring directory tree
+- Work-stealing for load balancing
+- Builds complete directory tree upfront, then processes
+- **Best for:** Recursive directory structures with imbalanced workloads
 
-### SECONDA PARTE - programmazione distribuita
 
-Si vuole realizzare il prototipo di un'applicazione distribuita di "Cooperative Pixel Art" (presente nel repo, in versione concentrata). L'applicazione deve permettere a più utenti di condividere, visualizzare e modificare collaborativamente una griglia che rappresenta un'immagine in pixel.    Nel repo è disponibile un esempio (parziale) di versione centralizzata, a singolo utente (``pcd.ass_single.part2.example.PixelArtMain``).
+### 4. Reactive Programming (RxJava)
 
-In particolare:
-- ogni utente può modificare l'immagine selezionando ("colorando") mediante il puntatore del mouse gli elementi della griglia (come mostrato nell'esempio fornito)
-- le variazioni apportate da un utente devono essere opportunamente visualizzate anche dagli altri utenti, in  modo che tutti gli utenti vedano sempre il medesimo stato della griglia, in modo consistente.   In particolare:
-  - se un utente visualizza la griglia allo stato s, ogni altro utente deve aver visualizzato o visualizzare lo stato s
-  - se ev1 e ev2 sono due eventi che concernono la griglia per cui ev1 →  ev2  per un utente ui, allora ev1 →  ev2  per ogni altro utente uj
-- gli utenti devono potersi aggiungere (e uscire)  dinamicamente, contattando uno qualsiasi degli utenti che già partecipano all'applicazione, in modo peer-to-peer. Nel caso si adotti un approccio basato su MOM, è possibile considerare – come punto di contatto – il nodo dove c'è il broker (o uno dei nodi dove c'è il broker, nel caso si considerino MOM che supportano forme di clustering/federazione)
-- ogni utente deve poter percepire dove si trova il puntatore del mouse di tutti gli altri utenti che stanno collaborando
+- Hot Observable stream with custom emitter
+- Backpressure handling (5000-item buffer)
+- Reduce operator for result aggregation
+- **Best for:** Stream processing scenarios (not blocking I/O)
 
-Si richiede di sviluppare due soluzioni:
-- una soluzione utilizzando un approccio basato su scambio di messaggi, attori distribuiti oppure MOM. 
-- una soluzione utilizzando un approccio basato su Java RMI come esempio di tecnologia che supporta Distributed Object Computing.
 
-### DETTAGLI SULLA CONSEGNA
+### 5. Async Event (Vert.x)
 
-La consegna consiste in una directory ``Single-Assignment-Single`` compressa (formato zip) contenente due sotto-directory (``part1``, ``part2``), una per ogni parte. Ogni sottodirectory deve essere strutturata come segue:
-- directory src con i sorgenti del programma
-- directory doc che contenga una sintetica relazione in PDF (report.pdf)
+- Event loop + worker pool architecture
+- Future composition with `Future.all()`
+- Non-blocking result handling via callbacks
+- **Best for:** Non-blocking I/O operations (not this workload)
 
-La relazione deve includere:
-- Analisi del problema, focalizzando in particolare gli aspetti relativi alla concorrenza
-- Descrizione della strategia risolutiva e dell’architettura proposta, sempre focalizzando l’attenzione su aspetti relativi alla concorrenza.
-  - da notare che - nella prima parte - la strategia risolutiva e architettura potrebbero variare a seconda dell'approccio utilizzato  
-- (Quando ritenuto utile) La descrizione del comportamento del sistema o di sottoparti utilizzando Reti di Petri. 
-- Prove di performance e considerazioni relative.
-- Per la prima parte - in merito al punto 1) in particolare (soluzione a thread) - l'identificazione di proprietà di correttezza e verifica in JPF.
+
+### 6. Actor Model (Akka)
+
+- Single analyzer actor processes all files
+- Asynchronous message passing
+- Requester actor retrieves final count
+- **Best for:** Distributed systems with message-based coordination
+
+
+## Performance benchmarks
+
+Tested on **MacBook M3 Pro (12 cores)** across datasets ranging from 10 to 50,000 PDFs, in the [benchmarksResults.txt] you can see the final results.
+
+##  Benchmark Methodology
+
+- **Warmup:** Pre-execution on <1000 files to minimize JIT effects
+- **Iterations:** 7 runs averaged per test
+- **Baseline:** Sequential single-threaded execution
+- **Datasets:** 8 test scenarios from 10 to 50,000 PDFs (flat + recursive)
+
+### Key Findings
+
+- **ForkJoin dominates** due to efficient work-stealing and cache locality
+- **Virtual Threads** excel on tiny datasets but degrade on large workloads
+- **Message-passing models** (Reactive/Async/Actor) fail due to 1600-1850ms framework overhead overwhelming blocking I/O operations
+- **Thread Pool** provides consistent 2.5-3.7× speedup—ideal for production reliability
+
+
+## Formal Verification (Model Checking)
+
+The Thread Pool implementation was verified using **Java PathFinder (JPF)** with the PreciseRaceDetector:
+
+```bash
+cd jpf-workspace
+
+java -Xmx1024m -jar ./JPF/build/RunJPF.jar +classpath=bin \
+  +listener=gov.nasa.jpf.listener.PreciseRaceDetector ThreadPoolSearch
+```
+
+**Result:** No race conditions, deadlocks, or synchronization errors detected.
+
+## 🛠️ Project Structure
+
+```
+├── src/
+│   ├── pcd/ass_single/part1/
+│   │   ├── strategies/
+│   │   │   ├── thread/          # Thread pool implementation
+│   │   │   ├── virtual_threads/ # Virtual threads
+│   │   │   ├── task_based/      # ForkJoin
+│   │   │   ├── reactive_prog/   # RxJava
+│   │   │   ├── async_event/     # Vert.x
+│   │   │   └── actors/          # Akka
+│   │   ├── SearchModel.java     # Shared state
+│   │   ├── SearchView.java      # GUI
+│   │   └── SearchController.java # Controller
+│   └── benchmarks/               # Performance tests
+├── pdfs/                         # Test datasets (10 to 50K files)
+├── generator/                    # PDF generation scripts
+└── jpf-workspace/                # Java PathFinder setup
+```
+## 🔧 Requirements
+
+- **Java 21+** (for Virtual Threads support)
+- **Java 8** (for JPF verification only)
+- **Dependencies:**
+    - Apache PDFBox (PDF text extraction)
+    - RxJava 3 (Reactive)
+    - Vert.x (Async Event)
+    - Akka (Actors)
+
+
+## 🏃 Running the Application
+
+1. **To run the app**
+
+```bash
+mvn clean package 
+
+mvn exec:java -Dexec.mainClass="pcd.ass_single.part1.PdfSearchApp"  
+```
+
+2.  **To run benchmarks in your machine**
+```bash
+mvn exec:java -Dexec.mainClass="pcd.ass_single.part1.benchmarks.<benchmark-name>"  
+```
+
+
+
+
 
