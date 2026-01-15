@@ -46,7 +46,7 @@ public class AsyncBenchmark {
         warmup(testFolders, fileLists, asyncSearcher);
         individualBenchmarker(testFolders, fileLists, asyncSearcher, asyncTimes);
 
-        log("THREADS-based approach benchmark:");
+        log("ASYNC-EVENT-based approach benchmark:");
         for (int i = 0; i < singleThreadedTimes.size(); i++) {
             double singleThreadMs = singleThreadedTimes.get(i) / 1_000_000.0;
             double asyncMs = asyncTimes.get(i) / 1_000_000.0;

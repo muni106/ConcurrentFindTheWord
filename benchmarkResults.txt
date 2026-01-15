@@ -1,0 +1,252 @@
+THREADS-based approach benchmark:
+pdfs/test_3_10
+ Avg Sequential time: 3.62894 ms
+ Avg Thread Pool time: 1.496809 ms
+ Speedup: 2.424450948651431
+---------------------------------------
+pdfs/test_recursive_3_10
+ Avg Sequential time: 3.422779 ms
+ Avg Thread Pool time: 1.159505 ms
+ Speedup: 2.9519312120258214
+---------------------------------------
+pdfs/test_0_1000
+ Avg Sequential time: 215.22447 ms
+ Avg Thread Pool time: 65.409488 ms
+ Speedup: 3.2904166747185055
+---------------------------------------
+pdfs/test_recursive_50_100
+ Avg Sequential time: 30.289011 ms
+ Avg Thread Pool time: 8.105464 ms
+ Speedup: 3.7368633060365206
+---------------------------------------
+pdfs/test_recursive_1000_10000
+ Avg Sequential time: 1639.840857 ms
+ Avg Thread Pool time: 640.010225 ms
+ Speedup: 2.5622104037478466
+---------------------------------------
+pdfs/test_50_100
+ Avg Sequential time: 22.049374 ms
+ Avg Thread Pool time: 7.923512 ms
+ Speedup: 2.782777889400559
+---------------------------------------
+pdfs/test_1001_10000
+ Avg Sequential time: 1566.940291 ms
+ Avg Thread Pool time: 619.438702 ms
+ Speedup: 2.5296131577519674
+---------------------------------------
+pdfs/test_10_000__50_000
+ Avg Sequential time: 13017.688696 ms
+ Avg Thread Pool time: 3642.637583 ms
+ Speedup: 3.5736985630283056
+
+VIRTUAL THREAD approach benchmark:
+pdfs/test_3_10
+ Avg Sequential time: 3.283952 ms
+ Avg Thread Pool time: 0.518917 ms
+ Speedup: 6.328472568830853
+---------------------------------------
+pdfs/test_recursive_3_10
+ Avg Sequential time: 3.309607 ms
+ Avg Thread Pool time: 1.050291 ms
+ Speedup: 3.1511333525660983
+---------------------------------------
+pdfs/test_0_1000
+ Avg Sequential time: 238.127904 ms
+ Avg Thread Pool time: 87.151553 ms
+ Speedup: 2.732342635363021
+---------------------------------------
+pdfs/test_recursive_50_100
+ Avg Sequential time: 28.769202 ms
+ Avg Thread Pool time: 15.063023 ms
+ Speedup: 1.909922198220105
+---------------------------------------
+pdfs/test_recursive_1000_10000
+ Avg Sequential time: 1637.645881 ms
+ Avg Thread Pool time: 850.761589 ms
+ Speedup: 1.9249175117613355
+---------------------------------------
+pdfs/test_50_100
+ Avg Sequential time: 21.191428 ms
+ Avg Thread Pool time: 4.753137 ms
+ Speedup: 4.458408836101294
+---------------------------------------
+pdfs/test_1001_10000
+ Avg Sequential time: 1552.435738 ms
+ Avg Thread Pool time: 695.258518 ms
+ Speedup: 2.232889921961373
+---------------------------------------
+pdfs/test_10_000__50_000
+ Avg Sequential time: 13039.938505 ms
+ Avg Thread Pool time: 4810.400136 ms
+ Speedup: 2.710780420824435
+
+
+
+FORKJOIN-based approach benchmark:
+pdfs/test_3_10
+ Avg Sequential time: 3.374613 ms
+ Avg Thread Pool time: 0.664101 ms
+ Speedup: 5.081475558687609
+---------------------------------------
+pdfs/test_recursive_3_10
+ Avg Sequential time: 3.484405 ms
+ Avg Thread Pool time: 2.385887 ms
+ Speedup: 1.4604233142642549
+---------------------------------------
+pdfs/test_0_1000
+ Avg Sequential time: 224.002595 ms
+ Avg Thread Pool time: 74.058833 ms
+ Speedup: 3.024657369364705
+---------------------------------------
+pdfs/test_recursive_50_100
+ Avg Sequential time: 22.819398 ms
+ Avg Thread Pool time: 11.171666 ms
+ Speedup: 2.042613697903249
+---------------------------------------
+pdfs/test_recursive_1000_10000
+ Avg Sequential time: 1646.867565 ms
+ Avg Thread Pool time: 72.524505 ms
+ Speedup: 22.70773947371306
+---------------------------------------
+pdfs/test_50_100
+ Avg Sequential time: 17.038839 ms
+ Avg Thread Pool time: 4.588952 ms
+ Speedup: 3.7130131236936017
+---------------------------------------
+pdfs/test_1001_10000
+ Avg Sequential time: 1534.344464 ms
+ Avg Thread Pool time: 653.232601 ms
+ Speedup: 2.3488485749963357
+---------------------------------------
+pdfs/test_10_000__50_000
+ Avg Sequential time: 12596.120297 ms
+ Avg Thread Pool time: 3478.671303 ms
+ Speedup: 3.6209573138275895
+---------------------------------------
+
+REACTIVE-based approach benchmark:
+pdfs/test_3_10
+ Avg Sequential time: 3.398988 ms
+ Avg Thread Pool time: 1.641541 ms
+ Speedup: 2.0706080445142705
+---------------------------------------
+pdfs/test_recursive_3_10
+ Avg Sequential time: 3.417125 ms
+ Avg Thread Pool time: 2.657398 ms
+ Speedup: 1.285891311726734
+---------------------------------------
+pdfs/test_0_1000
+ Avg Sequential time: 215.967511 ms
+ Avg Thread Pool time: 150.797333 ms
+ Speedup: 1.4321706273147417
+---------------------------------------
+pdfs/test_recursive_50_100
+ Avg Sequential time: 27.187851 ms
+ Avg Thread Pool time: 21.924952 ms
+ Speedup: 1.2400415289392652
+---------------------------------------
+pdfs/test_recursive_1000_10000
+ Avg Sequential time: 1650.086047 ms
+ Avg Thread Pool time: 1574.843613 ms
+ Speedup: 1.047777717977131
+---------------------------------------
+pdfs/test_50_100
+ Avg Sequential time: 13.575481 ms
+ Avg Thread Pool time: 18.505672 ms
+ Speedup: 0.7335848706277729
+---------------------------------------
+pdfs/test_1001_10000
+ Avg Sequential time: 1504.095232 ms
+ Avg Thread Pool time: 1529.920893 ms
+ Speedup: 0.9831196102241869
+---------------------------------------
+pdfs/test_10_000__50_000
+ Avg Sequential time: 12190.520077 ms
+ Avg Thread Pool time: 11881.856833 ms
+ Speedup: 1.0259776942558958
+---------------------------------------
+
+
+ASYNC-EVENT-based approach benchmark:
+pdfs/test_3_10
+ Avg Sequential time: 3.475285 ms
+ Avg Thread Pool time: 4.285392 ms
+ Speedup: 0.8109608175868158
+---------------------------------------
+pdfs/test_recursive_3_10
+ Avg Sequential time: 3.753404 ms
+ Avg Thread Pool time: 3.437494 ms
+ Speedup: 1.0919012513185478
+---------------------------------------
+pdfs/test_0_1000
+ Avg Sequential time: 243.613946 ms
+ Avg Thread Pool time: 168.202333 ms
+ Speedup: 1.4483386862416467
+---------------------------------------
+pdfs/test_recursive_50_100
+ Avg Sequential time: 30.001511 ms
+ Avg Thread Pool time: 25.053232 ms
+ Speedup: 1.1975106046197952
+---------------------------------------
+pdfs/test_recursive_1000_10000
+ Avg Sequential time: 1701.048089 ms
+ Avg Thread Pool time: 1673.49697 ms
+ Speedup: 1.016463202201077
+---------------------------------------
+pdfs/test_50_100
+ Avg Sequential time: 21.491726 ms
+ Avg Thread Pool time: 19.299053 ms
+ Speedup: 1.1136155748160286
+---------------------------------------
+pdfs/test_1001_10000
+ Avg Sequential time: 1520.491035 ms
+ Avg Thread Pool time: 1608.447351 ms
+ Speedup: 0.9453160117766267
+---------------------------------------
+pdfs/test_10_000__50_000
+ Avg Sequential time: 12541.111839 ms
+ Avg Thread Pool time: 12731.832458 ms
+ Speedup: 0.9850201752474239
+---------------------------------------
+
+ACTOR-based approach benchmark:
+pdfs/test_3_10
+ Avg Sequential time: 4.335595 ms
+ Avg Thread Pool time: 13.465761 ms
+ Speedup: 0.32197177716135017
+---------------------------------------
+pdfs/test_recursive_3_10
+ Avg Sequential time: 5.606089 ms
+ Avg Thread Pool time: 14.700987 ms
+ Speedup: 0.38134099431555174
+---------------------------------------
+pdfs/test_0_1000
+ Avg Sequential time: 235.146523 ms
+ Avg Thread Pool time: 168.758762 ms
+ Speedup: 1.3933885281760956
+---------------------------------------
+pdfs/test_recursive_50_100
+ Avg Sequential time: 27.040982 ms
+ Avg Thread Pool time: 32.739993 ms
+ Speedup: 0.8259312089651333
+---------------------------------------
+pdfs/test_recursive_1000_10000
+ Avg Sequential time: 1678.97425 ms
+ Avg Thread Pool time: 1616.046125 ms
+ Speedup: 1.0389395599707898
+---------------------------------------
+pdfs/test_50_100
+ Avg Sequential time: 18.318946 ms
+ Avg Thread Pool time: 26.060637 ms
+ Speedup: 0.7029354654684764
+---------------------------------------
+pdfs/test_1001_10000
+ Avg Sequential time: 1484.473684 ms
+ Avg Thread Pool time: 1528.735178 ms
+ Speedup: 0.9710469840447408
+---------------------------------------
+pdfs/test_10_000__50_000
+ Avg Sequential time: 13142.611844 ms
+ Avg Thread Pool time: 13438.679208 ms
+ Speedup: 0.9779690132179245
+---------------------------------------

@@ -17,11 +17,13 @@ class PdfSearchVerticle extends AbstractVerticle {
     private final List<File> pdfs;
     private final String searchedWord;
     private final SearchModel model;
+    private final Promise<Integer> done;
 
-    PdfSearchVerticle(List<File> pdfs, String searchedWord, SearchModel model) {
+    PdfSearchVerticle(List<File> pdfs, String searchedWord, SearchModel model, Promise<Integer> done) {
         this.pdfs = pdfs;
         this.searchedWord = searchedWord;
         this.model = model;
+        this.done = done;
     }
 
     public void start() {
@@ -46,7 +48,8 @@ class PdfSearchVerticle extends AbstractVerticle {
         }
             return sum;
         }).onSuccess(result -> {
-            long finishTime = System.currentTimeMillis();
+            done.tryComplete(result);
+//            long finishTime = System.currentTimeMillis();
 //            System.out.println("Total sum is: " + result);
 //            System.out.println("Total time ms: " + (finishTime - startTime));
         });
@@ -79,9 +82,14 @@ public class VertxAsyncSearcher implements PdfWordSearcher {
     @Override
     public void extractText(List<File> pdfs, String word, SearchModel model) throws Exception {
 
+        Promise<Integer> done = Promise.promise();
         int workerPoolSize = Runtime.getRuntime().availableProcessors();
         VertxOptions options = new VertxOptions().setWorkerPoolSize(workerPoolSize);
         Vertx vertx = Vertx.vertx(options);
-        vertx.deployVerticle(new PdfSearchVerticle(pdfs, word, model));
+        vertx.deployVerticle(new PdfSearchVerticle(pdfs, word, model, done));
+
+        done.future().toCompletionStage().toCompletableFuture().get();
+        vertx.close();
+
     }
 }

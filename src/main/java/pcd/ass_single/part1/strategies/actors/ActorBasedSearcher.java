@@ -36,6 +36,9 @@ public class ActorBasedSearcher implements PdfWordSearcher {
 
         ActorRef requester = actorSystem.actorOf(Props.create(RequesterActor.class));
         counter.tell(new PdfAnalyzerActor.GetCount(), requester);
+
+        actorSystem.getWhenTerminated().toCompletableFuture().get();
+
     }
 
 
