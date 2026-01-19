@@ -3,6 +3,7 @@
 .idea
 # Compiled class file
 *.class
+output/
 
 # Log file
 *.log
