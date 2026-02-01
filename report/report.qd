@@ -54,7 +54,7 @@ cooperatively while maintaining system state consistency.
 
 
 # Solution strategy and architecture
-## Highlevel architecture
+## High-level architecture
 The project adopts a modular architecture that combines the Model-View-Controller 
 pattern with the Strategy pattern to accommodate six distinct concurrency approaches while
 maintaining code reusability and separation of concerns.
@@ -189,6 +189,8 @@ where Ncpu is obtained via `Runtime.getRuntime().availableProcessors()`.
 This approach follows the established heuristic that a system with N processors
 achieves optimal utilization with N+1 threads.
 
+<<<
+
 ### Work partitioning and distribution
 The ThreadPoolSearch class divides the list of pdf files into equal-sized chunks using a step-based partitioning strategy: step = numFiles / Nthreads.
 Each Worker thread receives a contiguous range defined by start and end indices, processing files
@@ -208,7 +210,7 @@ the monitor signals the waiting Output thread via the workersFinished condition 
 
 ### Worker thread implementation
 Each worker thread `extends Thread` and processes its assigned file range by iterating through
-pdf files, extracting text using Apache pdfBox's pdfTextStripper, and performing string matching.
+pdf files, extracting text using Apache PDFBox's pdfTextStripper, and performing string matching.
 The worker immediately updates the shared SearchModel when a match is found via `model.incCountPdfFilesWithWord()`,
 enabling real-time updates.
 After processing all assigned files, the worker reports its results to the monitor,
@@ -603,7 +605,7 @@ The benchmarks evaluate the six different strategies for pdf word search using a
 - Small: 3 with word out of 10 pdfs
 - Medium: 50 with word out of 100 pdfs(flat and recursive)
 - Medium: 0 with word out of 1000 pdfs
-- Large: 1001 with word out of 10000 pdfs (flat and recurisive)
+- Large: 1001 with word out of 10000 pdfs (flat and recursive)
 - Largest: 10000 with word out of 50000 pdfs
 
 ## Results
