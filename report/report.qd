@@ -1,4 +1,4 @@
-.docname {Report p.1}
+.docname {Report part1}
 .doctype {paged}
 .doclang {English}
 .theme {paperwhite} layout:{latex}
@@ -14,8 +14,10 @@
     #! .docname 
     .docauthor 2026
 
----
+    [Github repo](https://github.com/muni106/ConcurrentFindTheWord)
 
+
+---
 
 .tableofcontents maxdepth:{2} 
 
